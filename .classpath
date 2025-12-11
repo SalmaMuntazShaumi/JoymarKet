@@ -1,20 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+<<<<<<< HEAD
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
+=======
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+>>>>>>> 443f87ee42549556da1ed4f3436f861f90e34b7b
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry kind="src" path="src"/>
+=======
+>>>>>>> 443f87ee42549556da1ed4f3436f861f90e34b7b
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry kind="lib" path="E:/INSTALLER &amp; APPS/mysql-connector-java-8.0.24.jar">
+=======
+	<classpathentry kind="lib" path="C:/Users/Marvela F/Downloads/mysql-connector-java-8.0.24.jar">
+>>>>>>> 443f87ee42549556da1ed4f3436f861f90e34b7b
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry kind="output" path="bin"/>
+=======
+	<classpathentry kind="output" path=""/>
+>>>>>>> 443f87ee42549556da1ed4f3436f861f90e34b7b
 </classpath>
