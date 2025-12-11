@@ -1,82 +1,33 @@
 package model;
 
-public class Customer {
-	private String id;
-    private String fullName;
-    private String email;
-    private String password;
-    private String phone;
-    private String address;
-    private String gender;
+public class Customer extends User {
+    private double balance;
     
-	public Customer(String id, String fullName, String email, String password, String phone, String address,
-			String gender) {
-		super();
-		this.id = id;
-		this.fullName = fullName;
-		this.email = email;
-		this.password = password;
-		this.phone = phone;
-		this.address = address;
-		this.gender = gender;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getFullName() {
-		return fullName;
-	}
-
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
-	public String getGender() {
-		return gender;
-	}
-
-	public void setGender(String gender) {
-		this.gender = gender;
-	}
+    public Customer() {
+        super();
+        this.setRole("customer");
+    }
     
-	
+    public Customer(String idUser, String fullName, String email, String password,
+                   String phone, String address, String gender) {
+        super(idUser, fullName, email, password, phone, address, "customer", gender);
+        this.balance = 0.0;
+    }
     
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+    
+    public void topUpBalance(double amount) {
+        if (amount > 0) {
+            this.balance += amount;
+        }
+    }
+    
+    public boolean deductBalance(double amount) {
+        if (amount > 0 && this.balance >= amount) {
+            this.balance -= amount;
+            return true;
+        }
+        return false;
+    }
 }
