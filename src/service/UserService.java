@@ -445,4 +445,9 @@ public class UserService {
             return "Top-up failed";
         }
     }
+    
+    public double getCustomerBalance(String customerId) {
+        return userHandler.getCustomerBalance(customerId);
+    }
+
 }

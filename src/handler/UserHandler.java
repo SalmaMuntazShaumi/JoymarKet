@@ -533,4 +533,19 @@ public class UserHandler {
         user.setRole(rs.getString("role"));
         user.setGender(rs.getString("gender"));
     }
+    
+    public double getCustomerBalance(String customerId) {
+        String sql = "SELECT balance FROM Customer WHERE idCustomer = ?";
+        try (PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql)) {
+            ps.setString(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble("balance");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
 }

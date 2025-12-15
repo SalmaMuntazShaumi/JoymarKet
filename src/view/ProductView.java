@@ -14,6 +14,8 @@ import model.User;
 import service.UserService;
 
 public class ProductView extends Application {
+	
+	private Label balanceLabel;
     
     private ProductHandler productHandler;
     private UserService service;
@@ -128,13 +130,20 @@ public class ProductView extends Application {
         cartBtn.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white;");
         cartBtn.setOnAction(e -> showCartView());
         
+        Button topUpBtn = new Button("Top Up");
+        topUpBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white;");
+        topUpBtn.setOnAction(e -> showTopUp());
+        
         Button editProfileBtn = new Button("Edit Profile");
         editProfileBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
         editProfileBtn.setOnAction(e -> showEditProfile());
         
+        balanceLabel = new Label();
+        updateBalance();
+        
         HBox toolbar = new HBox(10);
         toolbar.setPadding(new Insets(10));
-        toolbar.getChildren().addAll(searchField, refreshBtn, cartBtn, editProfileBtn);
+        toolbar.getChildren().addAll(balanceLabel, searchField, refreshBtn, cartBtn, topUpBtn, editProfileBtn);
         
         // Main layout
         VBox root = new VBox(10);
@@ -145,6 +154,21 @@ public class ProductView extends Application {
         stage.setScene(scene);
         stage.show();
     }
+    
+    private void updateBalance() {
+  	  try {
+  	        double balance = service.getCustomerBalance(currentCustomerId);
+  	        balanceLabel.setText(String.format("Balance: Rp %, .0f", balance));
+  	    } catch (Exception e) {
+  	        balanceLabel.setText("Balance: -");
+  	    }
+  	}
+
+      private void showTopUp() {
+          TopUpBalance topUpView = new TopUpBalance(currentCustomerId);
+          topUpView.show();
+          updateBalance();
+      }
     
     private void loadProducts() {
         ObservableList<Product> products = FXCollections.observableArrayList(
@@ -170,16 +194,13 @@ public class ProductView extends Application {
     
     private void showEditProfile() {
         try {
-            // Make sure service is initialized
             if (service == null) {
                 service = new UserService();
             }
             
-            // Get user from database
             User user = service.getUserById(currentCustomerId);
             
             if (user == null) {
-                // If user not found in database (like "GUEST"), create a temporary user
                 user = createTemporaryUser(currentCustomerId);
             }
             

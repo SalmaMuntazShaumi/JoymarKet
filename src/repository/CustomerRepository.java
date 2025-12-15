@@ -1,28 +1,23 @@
-//package repository;
-//
-//import java.util.ArrayList;
-//import java.util.List;
-//
-//import model.Customer;
-//
-//public class CustomerRepository {
-//	
-//	private static ArrayList<Customer> customers = new ArrayList<>();
-//	
-//	public void createCustomer(Customer customer) {
-//		customers.add(customer);
-//	}
-//	
-//	public List<Customer> getAll() {
-//        return customers;
-//    }
-//	
-//	 public Customer findByEmail(String email) {
-//	        return customers.stream().filter(c -> c.getEmail().equalsIgnoreCase(email)).findFirst().orElse(null);
-//	 }
-//	 
-//	 public boolean existsById(String id) {
-//	        return customers.stream().anyMatch(c -> c.getId().equals(id));
-//	 }
-//
-//}
+package repository;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import database.DBConnection;
+
+public class CustomerRepository {
+	public boolean topUpBalance(String customerId, double amount) {
+	    String sql = "UPDATE Customer SET balance = balance + ? WHERE idCustomer = ?";
+
+	    try (PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql)) {
+	        ps.setDouble(1, amount);
+	        ps.setString(2, customerId);
+	        return ps.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
+
+	
+}
