@@ -1,4 +1,4 @@
-package view;
+package view.Auth;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -132,7 +132,7 @@ public class LoginView {
     }
     
     private void showProductView(String customerId, String customerName) {
-        ProductView productView = new ProductView();
+        CustomerDashboard productView = new CustomerDashboard();
         Stage productStage = new Stage();
         productView.start(productStage, customerId, customerName);
         stage.close();

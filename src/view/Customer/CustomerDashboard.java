@@ -1,4 +1,4 @@
-package view;
+package view.Customer;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -14,7 +14,7 @@ import controller.ProductController;
 import controller.CustomerController;
 import controller.AuthController;
 
-public class ProductView extends Application {
+public class CustomerDashboard extends Application {
     
     private Label balanceLabel;
     private ProductController productController;

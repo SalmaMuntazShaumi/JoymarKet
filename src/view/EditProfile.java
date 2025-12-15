@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model_entity.User;
+import view.Auth.LoginView;
 import controller.AuthController;
 
 public class EditProfile {

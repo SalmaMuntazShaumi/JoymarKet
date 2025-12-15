@@ -6,7 +6,7 @@ import database.DBConnection;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
-import view.LoginView;
+import view.Auth.LoginView;
 
 public class Main extends Application {
 

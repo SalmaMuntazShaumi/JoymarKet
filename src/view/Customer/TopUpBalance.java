@@ -1,4 +1,4 @@
-package view;
+package view.Customer;
 
 import controller.CustomerController;
 import javafx.geometry.Insets;

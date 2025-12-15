@@ -1,4 +1,4 @@
-package view;
+package view.Customer;
 
 import controller.CartController;
 import controller.ProductController;

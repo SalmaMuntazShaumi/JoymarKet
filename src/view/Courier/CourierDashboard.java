@@ -1,4 +1,4 @@
-package view;
+package view.Courier;
 
 public class CourierDashboard {
 

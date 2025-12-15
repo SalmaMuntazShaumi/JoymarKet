@@ -1,4 +1,4 @@
-package view.Register;
+package view.Auth;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -8,7 +8,6 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import controller.CourierController;
-import view.RoleSelection;
 
 public class CourierRegisterView {
     
