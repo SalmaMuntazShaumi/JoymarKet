@@ -82,7 +82,6 @@ public class CourierRegisterView {
                 messageLabel.setStyle("-fx-text-fill: green;");
                 // Extract generated ID
                 String generatedId = result.split("#")[1];
-                messageLabel.setText("Courier registration successful!\nYour Courier ID: " + generatedId);
                 
                 // Clear fields
                 nameField.clear();

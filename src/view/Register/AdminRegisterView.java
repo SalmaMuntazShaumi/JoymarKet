@@ -78,7 +78,6 @@ public class AdminRegisterView {
                 messageLabel.setStyle("-fx-text-fill: green;");
                 // Extract generated ID
                 String generatedId = result.split("#")[1];
-                messageLabel.setText("Admin registration successful!\nYour Admin ID: " + generatedId);
                 
                 // Clear fields
                 nameField.clear();
