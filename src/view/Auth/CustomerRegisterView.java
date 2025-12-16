@@ -1,0 +1,145 @@
+package view.Auth;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import controller.CustomerController;
+
+public class CustomerRegisterView {
+    
+    public CustomerRegisterView() {
+        // Constructor tanpa parameter
+    }
+    
+    public void start(Stage stage) {
+        stage.setTitle("Register as Customer");
+        
+        Label titleLabel = new Label("Customer Registration");
+        titleLabel.setFont(Font.font("Arial", 20));
+        
+        // Form fields - HAPUS ID FIELD
+        TextField nameField = new TextField();
+        nameField.setPromptText("Your full name");
+        
+        TextField emailField = new TextField();
+        emailField.setPromptText("your@email.com");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Minimum 6 characters");
+        
+        PasswordField confirmField = new PasswordField();
+        confirmField.setPromptText("Re-enter password");
+        
+        TextField phoneField = new TextField();
+        phoneField.setPromptText("e.g., 081234567890");
+        
+        TextArea addressArea = new TextArea();
+        addressArea.setPromptText("Your complete address");
+        addressArea.setPrefRowCount(3);
+        
+        // Gender field
+        Label genderLabel = new Label("Gender:");
+        ComboBox<String> genderCombo = new ComboBox<>();
+        genderCombo.getItems().addAll("Female", "Male");
+        genderCombo.setValue("Female");
+        
+        Button registerBtn = new Button("Register");
+        registerBtn.setDefaultButton(true);
+        
+        Button backBtn = new Button("Back");
+        
+        Label messageLabel = new Label();
+        messageLabel.setWrapText(true);
+        
+        // Register button action
+        registerBtn.setOnAction(e -> {
+            CustomerController controller = new CustomerController();
+            
+            String result = controller.registerCustomer(
+                nameField.getText(),
+                emailField.getText(),
+                passwordField.getText(),
+                confirmField.getText(),
+                phoneField.getText(),
+                addressArea.getText(),
+                genderCombo.getValue()
+            );
+            
+            if (result.startsWith("SUCCESS")) {
+                messageLabel.setStyle("-fx-text-fill: green;");
+                // Extract generated ID
+                String generatedId = result.split("#")[1];
+                
+                // Clear fields
+                nameField.clear();
+                emailField.clear();
+                passwordField.clear();
+                confirmField.clear();
+                phoneField.clear();
+                addressArea.clear();
+                genderCombo.setValue("Female");
+            } else {
+                messageLabel.setStyle("-fx-text-fill: red;");
+                messageLabel.setText(result);
+            }
+        });
+        
+        // Back button action
+        backBtn.setOnAction(e -> {
+            RoleSelection selectionView = new RoleSelection();
+            Stage selectionStage = new Stage();
+            selectionView.start(selectionStage);
+            stage.close();
+        });
+        
+        // Layout
+        GridPane grid = new GridPane();
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+        
+        int row = 0;
+        grid.add(titleLabel, 0, row++, 2, 1);
+        
+        // TIDAK ADA ID FIELD LAGI
+        grid.add(new Label("Full Name:"), 0, row);
+        grid.add(nameField, 1, row++);
+        
+        grid.add(new Label("Email:"), 0, row);
+        grid.add(emailField, 1, row++);
+        
+        grid.add(new Label("Password:"), 0, row);
+        grid.add(passwordField, 1, row++);
+        
+        grid.add(new Label("Confirm Password:"), 0, row);
+        grid.add(confirmField, 1, row++);
+        
+        grid.add(new Label("Phone:"), 0, row);
+        grid.add(phoneField, 1, row++);
+        
+        grid.add(new Label("Address:"), 0, row);
+        grid.add(addressArea, 1, row++);
+        
+        grid.add(genderLabel, 0, row);
+        grid.add(genderCombo, 1, row++);
+        
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.getChildren().addAll(registerBtn, backBtn);
+        grid.add(buttonBox, 0, row++, 2, 1);
+        
+        grid.add(messageLabel, 0, row++, 2, 1);
+        
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        
+        Scene scene = new Scene(scrollPane, 500, 550);
+        stage.setScene(scene);
+        stage.show();
+    }
+}
