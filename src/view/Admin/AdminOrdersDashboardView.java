@@ -1,86 +1,122 @@
 package view.Admin;
 
 import controller.AdminOrderController;
+import controller.CourierController;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import model_entity.Courier;
 import model_entity.OrderHeader;
-
-import java.util.List;
 
 public class AdminOrdersDashboardView {
 
-    private TableView<OrderHeader> table;
-    
-    private void showAlert(String title, String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle(title);
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
-    }
+    private TableView<OrderHeader> paidTable = new TableView<>();
+    private TableView<OrderHeader> assignTable = new TableView<>();
 
     public void show() {
         Stage stage = new Stage();
-        stage.setTitle("Manage Orders");
+        stage.setTitle("Order Management - Admin");
 
-        table = new TableView<>();
+        setupPaidTable();
+        setupAssignTable();
 
-        TableColumn<OrderHeader, String> idCol = new TableColumn<>("Order ID");
-        idCol.setCellValueFactory(c ->
-            new javafx.beans.property.SimpleStringProperty(c.getValue().getIdOrder())
+        Label paidLabel = new Label("PAID Orders");
+        paidLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        Label assignLabel = new Label("Assign Courier (PROCESSING Orders)");
+        assignLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        VBox root = new VBox(15,
+                paidLabel,
+                paidTable,
+                new Separator(),
+                assignLabel,
+                assignTable
         );
+        root.setPadding(new Insets(15));
 
-        TableColumn<OrderHeader, String> custCol = new TableColumn<>("Customer");
-        custCol.setCellValueFactory(c ->
-            new javafx.beans.property.SimpleStringProperty(c.getValue().getIdCustomer())
+        loadPaidOrders();
+        loadProcessingOrders();
+
+        stage.setScene(new Scene(root, 950, 650));
+        stage.show();
+    }
+
+    // ================= PAID TABLE =================
+    private void setupPaidTable() {
+        paidTable.getColumns().addAll(
+                col("Order ID", OrderHeader::getIdOrder, 120),
+                col("Customer", OrderHeader::getIdCustomer, 150),
+                col("Total", o -> String.format("Rp%,.0f", o.getTotalAmount()), 150),
+                actionPaidCol()
         );
+        paidTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
 
-        TableColumn<OrderHeader, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(c ->
-            new javafx.beans.property.SimpleStringProperty(c.getValue().getStatus())
-        );
+    private TableColumn<OrderHeader, Void> actionPaidCol() {
+        TableColumn<OrderHeader, Void> col = new TableColumn<>("Actions");
+        col.setMinWidth(180);
 
-        TableColumn<OrderHeader, String> totalCol = new TableColumn<>("Total");
-        totalCol.setCellValueFactory(c ->
-            new javafx.beans.property.SimpleStringProperty(
-                String.format("Rp%,.0f", c.getValue().getTotalAmount())
-            )
-        );
-
-        TableColumn<OrderHeader, Void> actionCol = new TableColumn<>("Action");
-        actionCol.setCellFactory(c -> new TableCell<>() {
-
+        col.setCellFactory(c -> new TableCell<>() {
             private final Button acceptBtn = new Button("Accept");
             private final Button cancelBtn = new Button("Cancel");
+            private final HBox buttons = new HBox(8, acceptBtn, cancelBtn);
 
             {
-                acceptBtn.setStyle("-fx-background-color:#2e7d32;-fx-text-fill:white;");
-                cancelBtn.setStyle("-fx-background-color:#c62828;-fx-text-fill:white;");
+                acceptBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white; -fx-font-size: 12px;");
+                cancelBtn.setStyle("-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-size: 12px;");
 
                 acceptBtn.setOnAction(e -> {
-                    OrderHeader order = getTableView().getItems().get(getIndex());
-
-                    if (AdminOrderController.acceptOrder(order.getIdOrder())) {
-                        showAlert("Success", "Order accepted");
-                        loadData();
-                    } else {
-                        showAlert("Error", "Failed to accept order");
-                    }
+                    OrderHeader o = getTableView().getItems().get(getIndex());
+                    AdminOrderController.acceptOrder(o.getIdOrder());
+                    loadPaidOrders();
+                    loadProcessingOrders();
                 });
 
                 cancelBtn.setOnAction(e -> {
-                    OrderHeader order = getTableView().getItems().get(getIndex());
+                    OrderHeader o = getTableView().getItems().get(getIndex());
+                    AdminOrderController.cancelOrder(o.getIdOrder());
+                    loadPaidOrders();
+                });
+            }
 
-                    if (AdminOrderController.cancelOrder(order.getIdOrder())) {
-                        showAlert("Success", "Order cancelled & refunded");
-                        loadData();
-                    } else {
-                        showAlert("Error", "Failed to cancel order");
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : buttons);
+            }
+        });
+        return col;
+    }
+
+    // ================= ASSIGN TABLE =================
+    private void setupAssignTable() {
+        assignTable.getColumns().addAll(
+                col("Order ID", OrderHeader::getIdOrder, 200),
+                assignCourierCol()
+        );
+        assignTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
+
+    private TableColumn<OrderHeader, Void> assignCourierCol() {
+        TableColumn<OrderHeader, Void> col = new TableColumn<>("Actions");
+        col.setMinWidth(150);
+
+        col.setCellFactory(c -> new TableCell<>() {
+            private final Button assignBtn = new Button("Assign Courier");
+
+            {
+                assignBtn.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-size: 12px;");
+
+                assignBtn.setOnAction(e -> {
+                    OrderHeader o = getTableView().getItems().get(getIndex());
+
+                    boolean assigned = showCourierDialog(o.getIdOrder());
+                    if (assigned) {
+                        loadProcessingOrders(); // AUTO REFRESH
                     }
                 });
             }
@@ -88,37 +124,51 @@ public class AdminOrdersDashboardView {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : new VBox(5, acceptBtn, cancelBtn));
+                setGraphic(empty ? null : assignBtn);
             }
         });
-
-        table.getColumns().addAll(idCol, custCol, statusCol, totalCol, actionCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        loadData();
-
-        VBox root = new VBox(10, table);
-        root.setPadding(new Insets(15));
-
-        stage.setScene(new Scene(root, 800, 450));
-        stage.show();
+        return col;
     }
 
-    private void loadData() {
-        List<OrderHeader> orders = AdminOrderController.getPaidOrders();
+    // ================= DIALOG =================
+    private boolean showCourierDialog(String orderId) {
+        ChoiceDialog<Courier> dialog =
+                new ChoiceDialog<>(null, new CourierController().getAllCouriers());
 
-        if (orders.isEmpty()) {
-            table.setItems(FXCollections.observableArrayList());
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setHeaderText(null);
-            alert.setContentText("Tidak ada order dengan status PAID");
-            alert.showAndWait();
-            return;
-        }
+        dialog.setTitle("Assign Courier");
+        dialog.setHeaderText("Order ID: " + orderId);
+        dialog.setContentText("Select Courier:");
 
-        ObservableList<OrderHeader> data =
-            FXCollections.observableArrayList(orders);
-        table.setItems(data);
+        return dialog.showAndWait().map(c -> {
+            AdminOrderController.assignCourier(orderId, c.getIdUser());
+            return true;
+        }).orElse(false);
     }
-    
+
+    // ================= LOAD =================
+    private void loadPaidOrders() {
+        paidTable.setItems(FXCollections.observableArrayList(
+                AdminOrderController.getPaidOrders()
+        ));
+    }
+
+    private void loadProcessingOrders() {
+        assignTable.setItems(FXCollections.observableArrayList(
+                AdminOrderController.getProcessingOrders()
+        ));
+    }
+
+    // ================= UTIL =================
+    private TableColumn<OrderHeader, String> col(
+            String title,
+            java.util.function.Function<OrderHeader, String> mapper,
+            int minWidth
+    ) {
+        TableColumn<OrderHeader, String> c = new TableColumn<>(title);
+        c.setMinWidth(minWidth);
+        c.setCellValueFactory(v ->
+                new javafx.beans.property.SimpleStringProperty(mapper.apply(v.getValue()))
+        );
+        return c;
+    }
 }

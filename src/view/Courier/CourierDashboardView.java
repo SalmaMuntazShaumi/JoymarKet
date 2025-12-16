@@ -1,146 +1,145 @@
 package view.Courier;
 
+import controller.CourierDeliveryController;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.text.Font;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import model_entity.Courier;
-import view.Auth.LoginView;
+import model_entity.Delivery;
 
 public class CourierDashboardView {
-    private Courier courier;
-    
-    public CourierDashboardView(Courier courier) {
-        this.courier = courier;
+
+    private final String courierId;
+    private final TableView<Delivery> table = new TableView<>();
+    private final ComboBox<String> filterBox = new ComboBox<>();
+
+    public CourierDashboardView(String courierId) {
+        this.courierId = courierId;
     }
-    
-    public void start(Stage stage) {
-        stage.setTitle("Courier Dashboard - " + courier.getFullName());
-        
-        VBox mainLayout = new VBox(20);
-        mainLayout.setAlignment(Pos.CENTER);
-        mainLayout.setPadding(new Insets(30));
-        mainLayout.setStyle("-fx-background-color: #f7fafc;");
-        
-        // Header
-        Label welcomeLabel = new Label("Welcome, " + courier.getFullName());
-        welcomeLabel.setFont(Font.font("Arial", 24));
-        welcomeLabel.setStyle("-fx-text-fill: #2d3748; -fx-font-weight: bold;");
-        
-        Label roleLabel = new Label("Courier");
-        roleLabel.setFont(Font.font("Arial", 16));
-        roleLabel.setStyle("-fx-text-fill: #718096;");
-        
-        // Info Card
-        VBox infoCard = new VBox(15);
-        infoCard.setPadding(new Insets(20));
-        infoCard.setStyle("-fx-background-color: white; -fx-background-radius: 10px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 0);");
-        infoCard.setMaxWidth(400);
-        
-        Label vehicleLabel = new Label("🚚 Vehicle Information");
-        vehicleLabel.setFont(Font.font("Arial", 18));
-        vehicleLabel.setStyle("-fx-font-weight: bold;");
-        
-        Label typeLabel = new Label("Type: " + courier.getVehicleType());
-        Label plateLabel = new Label("Plate: " + courier.getVehiclePlate());
-        Label contactLabel = new Label("Contact: " + courier.getPhone());
-        
-        infoCard.getChildren().addAll(vehicleLabel, typeLabel, plateLabel, contactLabel);
-        
-        // Statistics
-        HBox statsBox = new HBox(20);
-        statsBox.setAlignment(Pos.CENTER);
-        
-        VBox deliveredBox = createStatBox("📦", "Delivered", "24");
-        VBox pendingBox = createStatBox("⏳", "Pending", "5");
-        VBox earningsBox = createStatBox("💰", "Earnings", "Rp 1,250,000");
-        
-        statsBox.getChildren().addAll(deliveredBox, pendingBox, earningsBox);
-        
-        // Quick Actions
-        VBox actionsBox = new VBox(10);
-        actionsBox.setAlignment(Pos.CENTER);
-        actionsBox.setMaxWidth(400);
-        
-        Button viewOrdersBtn = createActionButton("View Active Orders", "#4299e1");
-        Button updateStatusBtn = createActionButton("Update Status", "#48bb78");
-        Button viewHistoryBtn = createActionButton("Delivery History", "#ed8936");
-        
-        actionsBox.getChildren().addAll(viewOrdersBtn, updateStatusBtn, viewHistoryBtn);
-        
-        // Logout Button
-        Button logoutBtn = new Button("Logout");
-        logoutBtn.setStyle(
-            "-fx-background-color: #fed7d7; " +
-            "-fx-text-fill: #c53030; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 10px 30px; " +
-            "-fx-background-radius: 8px;"
-        );
-        logoutBtn.setOnAction(e -> {
-            LoginView loginView = new LoginView();
-            Stage loginStage = new Stage();
-            loginView.start(loginStage);
-            stage.close();
-        });
-        
-        mainLayout.getChildren().addAll(
-            welcomeLabel,
-            roleLabel,
-            infoCard,
-            statsBox,
-            new Separator(),
-            new Label("Quick Actions"),
-            actionsBox,
-            logoutBtn
-        );
-        
-        Scene scene = new Scene(mainLayout, 600, 700);
-        stage.setScene(scene);
+
+    public void show() {
+        Stage stage = new Stage();
+        stage.setTitle("Courier Dashboard");
+
+        setupFilter();
+        setupTable();
+        loadData();
+
+        VBox root = new VBox(12, filterBox, table);
+        root.setPadding(new Insets(15));
+
+        stage.setScene(new Scene(root, 900, 520));
         stage.show();
     }
-    
-    private VBox createStatBox(String icon, String title, String value) {
-        VBox box = new VBox(5);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(15));
-        box.setStyle("-fx-background-color: white; -fx-background-radius: 8px; -fx-border-color: #e2e8f0; -fx-border-radius: 8px;");
-        
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 24px;");
-        
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-text-fill: #718096; -fx-font-size: 12px;");
-        
-        Label valueLabel = new Label(value);
-        valueLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d3748;");
-        
-        box.getChildren().addAll(iconLabel, titleLabel, valueLabel);
-        return box;
-    }
-    
-    private Button createActionButton(String text, String color) {
-        Button button = new Button(text);
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setStyle(
-            "-fx-background-color: " + color + "; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 12px; " +
-            "-fx-background-radius: 8px;"
+
+    // ================= FILTER =================
+    private void setupFilter() {
+        filterBox.getItems().addAll(
+                "ALL",
+                "assigned",
+                "onDelivery",
+                "completed"
         );
-        button.setOnAction(e -> showAlert("Info", text + " feature coming soon!"));
-        return button;
+        filterBox.setValue("assigned");
+
+        filterBox.setOnAction(e -> loadData());
     }
-    
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    // ================= TABLE =================
+    private void setupTable() {
+
+        TableColumn<Delivery, String> orderCol = new TableColumn<>("Order ID");
+        orderCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getIdOrder()));
+
+        TableColumn<Delivery, String> custCol = new TableColumn<>("Customer");
+        custCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getCustomerName()));
+
+        TableColumn<Delivery, String> addrCol = new TableColumn<>("Address");
+        addrCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getCustomerAddress()));
+
+        TableColumn<Delivery, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getStatus()));
+
+        TableColumn<Delivery, Void> actionCol = new TableColumn<>("Action");
+        actionCol.setCellFactory(col -> new TableCell<>() {
+
+            private final Button acceptBtn = new Button("Accept");
+            private final Button receivedBtn = new Button("Received");
+
+            {
+                acceptBtn.setStyle(
+                        "-fx-background-color:#1976d2; -fx-text-fill:white;"
+                );
+                receivedBtn.setStyle(
+                        "-fx-background-color:#388e3c; -fx-text-fill:white;"
+                );
+
+                acceptBtn.setOnAction(e -> {
+                    Delivery d = getTableView().getItems().get(getIndex());
+                    CourierDeliveryController.acceptDelivery(
+                            d.getIdOrder(),
+                            courierId
+                    );
+                    loadData();
+                });
+
+                receivedBtn.setOnAction(e -> {
+                    Delivery d = getTableView().getItems().get(getIndex());
+                    CourierDeliveryController.completeDelivery(d.getIdOrder());
+                    loadData();
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
+
+                Delivery d = getTableView().getItems().get(getIndex());
+                String status = d.getStatus(); // SUDAH SESUAI ENUM DB
+
+                if ("assigned".equals(status)) {
+                    setGraphic(acceptBtn);
+                } else if ("onDelivery".equals(status)) {
+                    setGraphic(receivedBtn);
+                } else {
+                    setGraphic(null);
+                }
+            }
+        });
+
+        table.getColumns().addAll(
+                orderCol,
+                custCol,
+                addrCol,
+                statusCol,
+                actionCol
+        );
+
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
+
+    // ================= LOAD =================
+    private void loadData() {
+        String status = filterBox.getValue();
+
+        if ("ALL".equals(status)) {
+            status = null;
+        }
+
+        table.setItems(FXCollections.observableArrayList(
+                CourierDeliveryController.getDeliveries(courierId, status)
+        ));
     }
 }

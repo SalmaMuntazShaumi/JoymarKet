@@ -11,6 +11,9 @@ import model_entity.*;
 import view.Customer.CustomerDashboard;
 import view.Admin.AdminDashboardView;
 import controller.AuthController;
+import view.Courier.CourierDashboardView;
+import view.Courier.CourierDashboardView;
+import view.Courier.CourierDashboardView;
 
 public class LoginView {
     private AuthController authController;
@@ -138,25 +141,15 @@ public class LoginView {
     }
     
     private void showCourierView(Courier courier) {
-        // Simple courier view
+        CourierDashboardView dashboard =
+            new CourierDashboardView(courier.getIdUser());
+
         Stage courierStage = new Stage();
-        courierStage.setTitle("Courier Dashboard - " + courier.getFullName());
-        
-        Label welcomeLabel = new Label("Welcome Courier: " + courier.getFullName());
-        welcomeLabel.setFont(Font.font("Arial", 18));
-        
-        Label infoLabel = new Label("Vehicle: " + courier.getVehicleType() + " - " + courier.getVehiclePlate());
-        
-        VBox layout = new VBox(20);
-        layout.setAlignment(Pos.CENTER);
-        layout.setPadding(new Insets(20));
-        layout.getChildren().addAll(welcomeLabel, infoLabel);
-        
-        Scene scene = new Scene(layout, 400, 300);
-        courierStage.setScene(scene);
-        courierStage.show();
+        dashboard.show();
+
         stage.close();
     }
+
     
     private void showAdminView(Admin admin) {
         // Redirect ke AdminDashboardView yang baru

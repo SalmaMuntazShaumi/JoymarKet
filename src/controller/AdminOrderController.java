@@ -1,5 +1,6 @@
 package controller;
 
+import model.DeliveryModel;
 import model.OrderModel;
 import model_entity.OrderHeader;
 
@@ -17,5 +18,11 @@ public class AdminOrderController {
 
     public static List<OrderHeader> getPaidOrders() {
         return OrderModel.getOrdersByStatus("PAID");
+    }
+    public static List<OrderHeader> getProcessingOrders() {
+        return OrderModel.getProcessingOrders();
+    }
+    public static boolean assignCourier(String idOrder, String idCourier) {
+        return DeliveryModel.assignCourier(idOrder, idCourier);
     }
 }

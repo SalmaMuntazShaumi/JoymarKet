@@ -286,4 +286,37 @@ public class OrderModel {
 
         return list;
     }
+    public static List<OrderHeader> getProcessingOrders() {
+        List<OrderHeader> list = new ArrayList<>();
+
+        String sql =
+            "SELECT o.* " +
+            "FROM orderheader o " +
+            "LEFT JOIN delivery d ON o.idOrder = d.idOrder " +
+            "WHERE o.status = 'PROCESSING' " +
+            "AND (d.idCourier IS NULL OR d.status = 'WAITING')";
+
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(new OrderHeader(
+                    rs.getString("idOrder"),
+                    rs.getString("idCustomer"),
+                    rs.getString("idPromo"),
+                    rs.getString("status"),
+                    rs.getDouble("totalAmount"),
+                    rs.getTimestamp("orderedAt").toLocalDateTime()
+                ));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+
 }
