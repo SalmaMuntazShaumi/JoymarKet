@@ -61,21 +61,55 @@ public class DeliveryModel {
     }
 
     // ================= COMPLETE =================
+ // ================= COMPLETE =================
     public static boolean completeDelivery(String idOrder) {
         try (Connection c = DBConnection.getConnection()) {
             c.setAutoCommit(false);
 
+            String customerId = null;
+
+            // 1️⃣ Ambil customer dari order
             try (PreparedStatement ps =
-                c.prepareStatement(
-                    "UPDATE delivery SET status='completed' WHERE idOrder=?")) {
+                 c.prepareStatement(
+                     "SELECT idCustomer FROM orderheader WHERE idOrder=?")) {
+
+                ps.setString(1, idOrder);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    customerId = rs.getString("idCustomer");
+                }
+            }
+
+            if (customerId == null) {
+                c.rollback();
+                return false;
+            }
+
+            // 2️⃣ Update delivery
+            try (PreparedStatement ps =
+                 c.prepareStatement(
+                     "UPDATE delivery SET status='completed' WHERE idOrder=?")) {
                 ps.setString(1, idOrder);
                 ps.executeUpdate();
             }
 
+            // 3️⃣ Update order
             try (PreparedStatement ps =
-                c.prepareStatement(
-                    "UPDATE orderheader SET status='delivered' WHERE idOrder=?")) {
+                 c.prepareStatement(
+                     "UPDATE orderheader SET status='delivered' WHERE idOrder=?")) {
                 ps.setString(1, idOrder);
+                ps.executeUpdate();
+            }
+
+            // 4️⃣ Kirim NOTIFIKASI ke customer
+            try (PreparedStatement ps =
+                 c.prepareStatement(
+                     "INSERT INTO notification (idCustomer, message, isRead, createdAt) " +
+                     "VALUES (?, ?, 0, NOW())")) {
+
+                ps.setString(1, customerId);
+                ps.setString(2,
+                    "Pesanan dengan ID " + idOrder + " telah sampai. Terima kasih telah berbelanja!");
                 ps.executeUpdate();
             }
 
@@ -87,6 +121,7 @@ public class DeliveryModel {
             return false;
         }
     }
+
 
     // ================= DELIVERY MILIK COURIER =================
     public static List<Delivery> getCourierDeliveries(String courierId, String status) {
