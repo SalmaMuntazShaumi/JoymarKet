@@ -1,3 +1,4 @@
+package view.Admin;
 
 import controller.AdminProductController;
 import javafx.collections.FXCollections;

@@ -2,9 +2,9 @@ package controller;
 
 import java.util.List;
 
-import src.model.CustomerModel;
-import src.model.UserModel;
-import src.model_entity.Customer;
+import model.CustomerModel;
+import model.UserModel;
+import model_entity.Customer;
 
 public class CustomerController {
 

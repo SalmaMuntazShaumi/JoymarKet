@@ -19,7 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model_entity.Product;
 import model_entity.User;
-import src.controller.ProductController;
+import controller.ProductController;
 import view.EditProfile;
 
 public class CustomerDashboard extends Application {

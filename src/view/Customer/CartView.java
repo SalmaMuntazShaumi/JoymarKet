@@ -17,7 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model_entity.CartItem;
-import src.controller.ProductController;
+import controller.ProductController;
 import view.UpdateCartView;
 
 public class CartView {
