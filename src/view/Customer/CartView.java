@@ -1,293 +1,255 @@
 package view.Customer;
 
 import controller.CartController;
-import controller.ProductController;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import model_entity.CartItem;
-import model_entity.Product;
-import view.UpdateCartView;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CartView {
+
     private Stage stage;
     private String customerId;
     private CartController cartController;
-    private ProductController productController;
-    
+
     private TableView<CartItem> cartTable;
     private Label totalLabel;
-    private Button checkoutButton;
-    private Button clearCartButton;
-    private Button backButton;
-    
-    public CartView(String customerId) {
+    private CheckBox selectAllCheckBox;
+
+    // 🔥 CALLBACK
+    private Runnable onCheckoutSuccess;
+
+    // ===== CONSTRUCTOR =====
+    public CartView(String customerId, Runnable onCheckoutSuccess) {
         this.customerId = customerId;
+        this.onCheckoutSuccess = onCheckoutSuccess;
         this.cartController = CartController.getInstance();
-        this.productController = ProductController.getInstance();
-        initializeUI();
+
+        initUI();
         setupLayout();
-        loadCartData();
+        loadData();
     }
-    
-    private void initializeUI() {
+
+    // OPTIONAL backward compatibility
+    public CartView(String customerId) {
+        this(customerId, null);
+    }
+
+    private void initUI() {
         stage = new Stage();
-        stage.setTitle("Shopping Cart - Customer: " + customerId);
-        
+        stage.setTitle("Shopping Cart");
+
         cartTable = new TableView<>();
-        setupTableColumns();
-        
-        totalLabel = new Label("Total: Rp 0");
-        totalLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
-        checkoutButton = new Button("Checkout");
-        checkoutButton.setStyle("-fx-background-color: #2e7d32; -fx-text-fill: white;");
-        checkoutButton.setMinWidth(100);
-        
-        clearCartButton = new Button("Clear Cart");
-        clearCartButton.setStyle("-fx-background-color: #c62828; -fx-text-fill: white;");
-        clearCartButton.setMinWidth(100);
-        
-        backButton = new Button("Back");
-        backButton.setMinWidth(100);
+        cartTable.setEditable(true);
+
+        selectAllCheckBox = new CheckBox("Select All");
+        selectAllCheckBox.setOnAction(e -> {
+            boolean checked = selectAllCheckBox.isSelected();
+            cartTable.getItems().forEach(i -> i.setSelected(checked));
+            updateTotal();
+        });
+
+        totalLabel = new Label("Selected Total: Rp 0");
+        totalLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
     }
-    
-    private void setupTableColumns() {
-        // Product ID Column
-        TableColumn<CartItem, String> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(cellData -> {
-            String id = cellData.getValue().getIdProduct();
-            return new javafx.beans.property.SimpleStringProperty(id);
+
+    private void setupLayout() {
+
+        setupColumns();
+
+        Button checkoutBtn = new Button("Checkout Selected");
+        checkoutBtn.setStyle("-fx-background-color: #2e7d32; -fx-text-fill: white;");
+        checkoutBtn.setOnAction(e -> openCheckout());
+
+        Button clearBtn = new Button("Clear Cart");
+        clearBtn.setStyle("-fx-background-color: #c62828; -fx-text-fill: white;");
+        clearBtn.setOnAction(e -> {
+            cartController.clearCart(customerId);
+            loadData();
         });
-        idCol.setMinWidth(80);
-        
-        // Product Name Column
-        TableColumn<CartItem, String> nameCol = new TableColumn<>("Product Name");
-        nameCol.setCellValueFactory(cellData -> {
-            if (cellData.getValue().getProduct() != null) {
-                return new javafx.beans.property.SimpleStringProperty(
-                    cellData.getValue().getProduct().getName());
-            }
-            return new javafx.beans.property.SimpleStringProperty("");
-        });
-        nameCol.setMinWidth(150);
-        
-        // Price Column
-        TableColumn<CartItem, String> priceCol = new TableColumn<>("Price");
-        priceCol.setCellValueFactory(cellData -> {
-            if (cellData.getValue().getProduct() != null) {
-                double price = cellData.getValue().getProduct().getPrice();
-                return new javafx.beans.property.SimpleStringProperty(
-                    String.format("Rp%,.0f", price));
-            }
-            return new javafx.beans.property.SimpleStringProperty("");
-        });
-        priceCol.setMinWidth(100);
-        
-        // Quantity Column
-        TableColumn<CartItem, String> quantityCol = new TableColumn<>("Qty");
-        quantityCol.setCellValueFactory(cellData -> {
-            int count = cellData.getValue().getCount();
-            return new javafx.beans.property.SimpleStringProperty(String.valueOf(count));
-        });
-        quantityCol.setMinWidth(60);
-        
-        // Total Column
-        TableColumn<CartItem, String> totalCol = new TableColumn<>("Total");
-        totalCol.setCellValueFactory(cellData -> 
+
+        Button backBtn = new Button("Back");
+        backBtn.setOnAction(e -> stage.close());
+
+        VBox footer = new VBox(10,
+                totalLabel,
+                new HBox(10, checkoutBtn, clearBtn, backBtn)
+        );
+        footer.setPadding(new Insets(10));
+
+        VBox root = new VBox(10,
+                new VBox(5, new Label("Shopping Cart"), selectAllCheckBox),
+                cartTable,
+                footer
+        );
+        root.setPadding(new Insets(15));
+        root.setStyle("-fx-background-color: #f5f5f5;");
+
+        stage.setScene(new Scene(root, 750, 450));
+    }
+
+    private void setupColumns() {
+
+        TableColumn<CartItem, Boolean> selectCol = new TableColumn<>("✓");
+        selectCol.setCellValueFactory(c -> c.getValue().selectedProperty());
+        selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
+        selectCol.setPrefWidth(50);
+
+        TableColumn<CartItem, String> nameCol = new TableColumn<>("Product");
+        nameCol.setCellValueFactory(c ->
             new javafx.beans.property.SimpleStringProperty(
-                String.format("Rp%,.0f", cellData.getValue().getTotalPrice())));
-        totalCol.setMinWidth(100);
-        
-        // Actions Column
-        TableColumn<CartItem, Void> actionsCol = new TableColumn<>("Actions");
-        actionsCol.setMinWidth(150);
-        actionsCol.setCellFactory(param -> new TableCell<CartItem, Void>() {
-            private final Button updateBtn = new Button("Update");
-            private final Button removeBtn = new Button("Remove");
-            private final HBox buttons = new HBox(5, updateBtn, removeBtn);
-            
+                c.getValue().getProduct().getName()
+            )
+        );
+
+        TableColumn<CartItem, String> qtyCol = new TableColumn<>("Qty");
+        qtyCol.setCellValueFactory(c ->
+            new javafx.beans.property.SimpleStringProperty(
+                String.valueOf(c.getValue().getCount())
+            )
+        );
+
+        TableColumn<CartItem, String> totalCol = new TableColumn<>("Total");
+        totalCol.setCellValueFactory(c ->
+            new javafx.beans.property.SimpleStringProperty(
+                String.format("Rp%,.0f", c.getValue().getTotalPrice())
+            )
+        );
+
+        TableColumn<CartItem, Void> actionCol = createActionColumn();
+
+        cartTable.getColumns().addAll(
+            selectCol, nameCol, qtyCol, totalCol, actionCol
+        );
+        cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
+
+    private TableColumn<CartItem, Void> createActionColumn() {
+
+        TableColumn<CartItem, Void> col = new TableColumn<>("Action");
+
+        col.setCellFactory(c -> new TableCell<>() {
+
+            private final Button edit = new Button("Edit");
+            private final Button del = new Button("Delete");
+
             {
-                buttons.setPadding(new Insets(2, 0, 2, 0));
-                updateBtn.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white;");
-                removeBtn.setStyle("-fx-background-color: #d32f2f; -fx-text-fill: white;");
-                
-                updateBtn.setOnAction(event -> {
+                edit.setStyle("-fx-background-color:#0277bd;-fx-text-fill:white;");
+                del.setStyle("-fx-background-color:#c62828;-fx-text-fill:white;");
+
+                edit.setOnAction(e ->
+                    editQty(getTableView().getItems().get(getIndex()))
+                );
+
+                del.setOnAction(e -> {
                     CartItem item = getTableView().getItems().get(getIndex());
-                    showUpdateCartDialog(item);
-                });
-                
-                removeBtn.setOnAction(event -> {
-                    CartItem item = getTableView().getItems().get(getIndex());
-                    removeItem(item);
+                    cartController.removeFromCart(customerId, item.getIdProduct());
+                    loadData();
                 });
             }
-            
+
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : buttons);
+                setGraphic(empty ? null : new HBox(5, edit, del));
             }
         });
-        
-        cartTable.getColumns().addAll(idCol, nameCol, priceCol, quantityCol, totalCol, actionsCol);
-        cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        col.setPrefWidth(160);
+        return col;
     }
-    
-    private void setupLayout() {
-        // Toolbar
-        HBox toolbar = new HBox(10);
-        toolbar.setPadding(new Insets(10));
-        toolbar.getChildren().addAll(totalLabel, checkoutButton, clearCartButton, backButton);
-        
-        // Main layout
-        VBox root = new VBox(10);
-        root.setPadding(new Insets(15));
-        root.getChildren().addAll(cartTable, toolbar);
-        
-        // Event handlers
-        setupEventHandlers();
-        
-        Scene scene = new Scene(root, 700, 400);
-        stage.setScene(scene);
-    }
-    
-    private void setupEventHandlers() {
-        checkoutButton.setOnAction(e -> handleCheckout());
-        clearCartButton.setOnAction(e -> handleClearCart());
-        backButton.setOnAction(e -> stage.close());
-        
-        cartTable.setRowFactory(tv -> {
-            TableRow<CartItem> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    showUpdateCartDialog(row.getItem());
-                }
-            });
-            return row;
+
+    private void editQty(CartItem item) {
+        TextInputDialog dialog =
+            new TextInputDialog(String.valueOf(item.getCount()));
+
+        dialog.setTitle("Edit Quantity");
+        dialog.setHeaderText(item.getProduct().getName());
+        dialog.setContentText("Quantity:");
+
+        dialog.showAndWait().ifPresent(val -> {
+            try {
+                int qty = Integer.parseInt(val);
+                if (qty <= 0) return;
+
+                cartController.updateCartItem(
+                    customerId,
+                    item.getIdProduct(),
+                    qty
+                );
+                loadData();
+
+            } catch (NumberFormatException ignored) {}
         });
     }
-    
-    private void loadCartData() {
-        ObservableList<CartItem> items = FXCollections.observableArrayList(
-            cartController.getCustomerCart(customerId)
+
+    private void loadData() {
+        ObservableList<CartItem> items =
+            FXCollections.observableArrayList(
+                cartController.getCustomerCart(customerId)
+            );
+
+        items.forEach(i ->
+            i.selectedProperty().addListener((a,b,c) -> updateTotal())
         );
+
         cartTable.setItems(items);
         updateTotal();
     }
-    
+
     private void updateTotal() {
-        double total = cartController.getCartTotal(customerId);
-        totalLabel.setText(String.format("Total: Rp%,.0f", total));
-    }
-    
-    private void showUpdateCartDialog(CartItem item) {
-        if (item.getProduct() == null) return;
-        
-        // Gunakan UpdateCartView dari controller
-        UpdateCartView updateView = new UpdateCartView(
-            customerId,
-            item.getIdProduct(),
-            item.getProduct().getName(),
-            item.getCount(),
-            item.getProduct().getStock()
+        double total = cartTable.getItems().stream()
+            .filter(CartItem::isSelected)
+            .mapToDouble(CartItem::getTotalPrice)
+            .sum();
+
+        totalLabel.setText(
+            String.format("Selected Total: Rp%,.0f", total)
         );
-        updateView.showAndWait();
-        loadCartData(); // Refresh after update
     }
-    
-    private void removeItem(CartItem item) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirm Removal");
-        confirm.setHeaderText("Remove Item");
-        confirm.setContentText("Remove " + 
-            (item.getProduct() != null ? item.getProduct().getName() : "this item") + 
-            " from cart?");
-        
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                String error = cartController.removeFromCart(customerId, item.getIdProduct());
-                if (error.isEmpty()) {
-                    loadCartData();
-                } else {
-                    showAlert("Error", error);
-                }
-            }
-        });
-    }
-    
-    private void handleCheckout() {
-        if (cartTable.getItems().isEmpty()) {
-            showAlert("Empty Cart", "Your cart is empty!");
+
+    private void openCheckout() {
+
+        List<CartItem> selected =
+            cartTable.getItems().stream()
+                .filter(CartItem::isSelected)
+                .collect(Collectors.toList());
+
+        if (selected.isEmpty()) {
+            alert("No item selected");
             return;
         }
-        
-        // Cek apakah customer memiliki cukup balance
-        double totalAmount = cartController.getCartTotal(customerId);
-        
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Checkout");
-        confirm.setHeaderText("Confirm Purchase");
-        confirm.setContentText("Total: Rp" + totalAmount + 
-                              "\n\nProceed with checkout?");
-        
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                // Checkout process
-                boolean checkoutSuccess = cartController.checkoutCart(customerId);
-                
-                if (checkoutSuccess) {
-                    loadCartData(); // Refresh cart
-                    showAlert("Success", "Checkout completed successfully!");
-                } else {
-                    showAlert("Error", "Checkout failed. Insufficient balance or product out of stock.");
-                }
-            }
-        });
-    }
-    
-    private void handleClearCart() {
-        if (cartTable.getItems().isEmpty()) {
-            showAlert("Empty Cart", "Cart is already empty");
-            return;
+
+        // ⬇️ Checkout dialog
+        CheckoutView checkout =
+            new CheckoutView(customerId, selected);
+
+        checkout.showAndWait();
+
+        // 🔥 CALLBACK SETELAH CHECKOUT
+        if (onCheckoutSuccess != null) {
+            onCheckoutSuccess.run();
         }
-        
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Clear Cart");
-        confirm.setHeaderText("Confirm Clear Cart");
-        confirm.setContentText("Clear all items from cart?");
-        
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                String error = cartController.clearCart(customerId);
-                if (error.isEmpty()) {
-                    loadCartData();
-                    showAlert("Success", "Cart cleared");
-                } else {
-                    showAlert("Error", error);
-                }
-            }
-        });
+
+        loadData();
     }
-    
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private void alert(String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
-    
+
     public void show() {
         stage.show();
-    }
-    
-    public void showAndWait() {
-        stage.showAndWait();
     }
 }

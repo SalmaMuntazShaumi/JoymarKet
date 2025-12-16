@@ -157,4 +157,8 @@ public class CartModel {
         }
         return 0;
     }
+    public static boolean removeFromCart(String idCustomer, String idProduct) {
+        return deleteCartItem(idCustomer, idProduct);
+    }
+
 }
