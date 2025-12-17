@@ -1,241 +1,296 @@
 package view.Customer;
 
-import controller.AuthController;
-import controller.CustomerController;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import javafx.animation.PauseTransition;
+
 import model_entity.Product;
 import model_entity.User;
+import model_entity.Notification;
+
 import controller.ProductController;
+import controller.CustomerController;
+import controller.AuthController;
+import controller.NotificationController;
+
 import view.EditProfile;
 
 public class CustomerDashboard extends Application {
 
-	private Label balanceLabel;
-	private ProductController productController;
-	private CustomerController customerController;
-	private AuthController authController;
-	private String currentCustomerId;
-	private String currentCustomerName;
+    // ================== CONTROLLERS ==================
+    private ProductController productController;
+    private CustomerController customerController;
+    private AuthController authController;
+    private NotificationController notificationController;
 
-	private TableView<Product> productTable;
-	private TextField searchField;
+    // ================== USER ==================
+    private String currentCustomerId;
+    private String currentCustomerName;
 
-	public void start(Stage primaryStage, String customerId, String customerName) {
-		this.currentCustomerId = customerId;
-		this.currentCustomerName = customerName;
-		this.productController = ProductController.getInstance();
-		this.customerController = new CustomerController();
-		this.authController = new AuthController();
+    // ================== UI ==================
+    private Label balanceLabel;
+    private Button notifBtn;
+    private TableView<Product> productTable;
+    private TextField searchField;
 
-		initializeUI();
-		setupLayout(primaryStage);
-		loadProducts();
-	}
+    private ObservableList<Notification> notifications =
+            FXCollections.observableArrayList();
 
-	// Override untuk compatibility
-	@Override
-	public void start(Stage primaryStage) {
-		this.currentCustomerId = "GUEST";
-		this.currentCustomerName = "Guest";
-		start(primaryStage, currentCustomerId, currentCustomerName);
-	}
+    // ================== START ==================
+    public void start(Stage stage, String customerId, String customerName) {
+        this.currentCustomerId = customerId;
+        this.currentCustomerName = customerName;
 
-	private void initializeUI() {
-		productTable = new TableView<>();
-		setupProductTable();
+        productController = ProductController.getInstance();
+        customerController = new CustomerController();
+        authController = new AuthController();
+        notificationController = new NotificationController();
 
-		searchField = new TextField();
-		searchField.setPromptText("Search products...");
-		searchField.setMinWidth(200);
-	}
+        initUI(stage);
+        loadProducts();
+        updateBalance();
+        startNotificationPolling();
+    }
 
-	private void setupProductTable() {
-		// ID Column
-		TableColumn<Product, String> idCol = new TableColumn<>("ID");
-		idCol.setCellValueFactory(cellData -> {
-			String id = cellData.getValue().getIdProduct();
-			return new javafx.beans.property.SimpleStringProperty(id);
-		});
-		idCol.setMinWidth(80);
+    @Override
+    public void start(Stage primaryStage) {
+        start(primaryStage, "GUEST", "Guest");
+    }
 
-		// Name Column
-		TableColumn<Product, String> nameCol = new TableColumn<>("Name");
-		nameCol.setCellValueFactory(cellData -> {
-			String name = cellData.getValue().getName();
-			return new javafx.beans.property.SimpleStringProperty(name);
-		});
-		nameCol.setMinWidth(150);
+    // ================== UI SETUP ==================
+    private void initUI(Stage stage) {
 
-		// Category Column
-		TableColumn<Product, String> catCol = new TableColumn<>("Category");
-		catCol.setCellValueFactory(cellData -> {
-			String category = cellData.getValue().getCategory();
-			return new javafx.beans.property.SimpleStringProperty(category);
-		});
-		catCol.setMinWidth(100);
+        // --------- TABLE ---------
+        productTable = new TableView<>();
+        setupProductTable();
 
-		// Price Column
-		TableColumn<Product, String> priceCol = new TableColumn<>("Price");
-		priceCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
-				String.format("Rp%,.0f", cellData.getValue().getPrice())));
-		priceCol.setMinWidth(100);
+        searchField = new TextField();
+        searchField.setPromptText("Search products...");
 
-		// Stock Column
-		TableColumn<Product, String> stockCol = new TableColumn<>("Stock");
-		stockCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
-				String.valueOf(cellData.getValue().getStock())));
-		stockCol.setMinWidth(80);
+        balanceLabel = new Label();
 
-		// Add to Cart Column
-		TableColumn<Product, Void> actionCol = new TableColumn<>("Action");
-		actionCol.setMinWidth(120);
-		actionCol.setCellFactory(param -> new TableCell<Product, Void>() {
-			private final Button addBtn = new Button("Add to Cart");
+        notifBtn = new Button("Notifications");
+        notifBtn.setStyle("-fx-background-color:#6a1b9a; -fx-text-fill:white;");
+        notifBtn.setOnAction(e -> showNotificationCenter());
 
-			{
-				addBtn.setStyle("-fx-background-color: #388e3c; -fx-text-fill: white;");
-				addBtn.setOnAction(event -> {
-					Product product = getTableView().getItems().get(getIndex());
-					showAddToCartDialog(product);
-				});
-			}
+        Button cartBtn = new Button("Cart");
+        cartBtn.setOnAction(e -> showCartView());
 
-			@Override
-			protected void updateItem(Void item, boolean empty) {
-				super.updateItem(item, empty);
-				if (empty) {
-					setGraphic(null);
-				} else {
-					Product product = getTableView().getItems().get(getIndex());
-					addBtn.setDisable(product.getStock() <= 0);
-					setGraphic(addBtn);
-				}
-			}
-		});
+        Button refreshBtn = new Button("Refresh");
+        refreshBtn.setOnAction(e -> {
+            loadProducts();
+            updateBalance();
+        });
 
-		productTable.getColumns().addAll(idCol, nameCol, catCol, priceCol, stockCol, actionCol);
-		productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-	}
+        Button editProfileBtn = new Button("Edit Profile");
+        editProfileBtn.setOnAction(e -> showEditProfile());
 
-	private void setupLayout(Stage stage) {
-		stage.setTitle("Product Catalog - " + currentCustomerName);
+        HBox topBar = new HBox(10,
+                balanceLabel,
+                notifBtn,
+                searchField,
+                refreshBtn,
+                cartBtn,
+                editProfileBtn
+        );
+        topBar.setPadding(new Insets(10));
+        topBar.setAlignment(Pos.CENTER_LEFT);
 
-		// Top toolbar
-		Button refreshBtn = new Button("Refresh");
-		refreshBtn.setOnAction(e -> loadProducts());
+        VBox root = new VBox(10, topBar, productTable);
+        root.setPadding(new Insets(15));
 
-		Button cartBtn = new Button("View Cart");
-		cartBtn.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white;");
-		cartBtn.setOnAction(e -> showCartView());
+        stage.setTitle("Customer Dashboard - " + currentCustomerName);
+        stage.setScene(new Scene(root, 900, 520));
+        stage.show();
+    }
 
-		Button topUpBtn = new Button("Top Up");
-		topUpBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white;");
-		topUpBtn.setOnAction(e -> showTopUp());
+    // ================== PRODUCT TABLE ==================
+    private void setupProductTable() {
 
-		Button editProfileBtn = new Button("Edit Profile");
-		editProfileBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
-		editProfileBtn.setOnAction(e -> showEditProfile());
+        TableColumn<Product, String> nameCol = new TableColumn<>("Name");
+        nameCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+                c.getValue().getName()
+        ));
 
-		balanceLabel = new Label();
-		updateBalance();
+        TableColumn<Product, String> priceCol = new TableColumn<>("Price");
+        priceCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+                "Rp " + String.format("%,.0f", c.getValue().getPrice())
+        ));
 
-		HBox toolbar = new HBox(10);
-		toolbar.setPadding(new Insets(10));
-		toolbar.getChildren().addAll(balanceLabel, searchField, refreshBtn, cartBtn, topUpBtn, editProfileBtn);
+        TableColumn<Product, String> stockCol = new TableColumn<>("Stock");
+        stockCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+                String.valueOf(c.getValue().getStock())
+        ));
 
-		// Main layout
-		VBox root = new VBox(10);
-		root.setPadding(new Insets(15));
-		root.getChildren().addAll(toolbar, productTable);
+        TableColumn<Product, Void> actionCol = new TableColumn<>("Action");
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button addBtn = new Button("Add");
 
-		Scene scene = new Scene(root, 850, 500);
-		stage.setScene(scene);
-		stage.show();
-	}
+            {
+                addBtn.setOnAction(e -> {
+                    Product p = getTableView().getItems().get(getIndex());
+                    showAddToCartDialog(p);
+                });
+            }
 
-	private void updateBalance() {
-		try {
-			double balance = customerController.getCustomerBalance(currentCustomerId);
-			balanceLabel.setText(String.format("Balance: Rp%,.0f", balance));
-		} catch (Exception e) {
-			balanceLabel.setText("Balance: -");
-		}
-	}
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : addBtn);
+            }
+        });
 
-	private void showTopUp() {
-		TopUpBalance topUpView = new TopUpBalance(currentCustomerId);
-		topUpView.show();
-		updateBalance();
-	}
+        productTable.getColumns().addAll(
+                nameCol, priceCol, stockCol, actionCol
+        );
+        productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
 
-	private void loadProducts() {
-		ObservableList<Product> products = FXCollections.observableArrayList(productController.getAllProducts());
-		productTable.setItems(products);
+    // ================== DATA ==================
+    private void loadProducts() {
+        ObservableList<Product> products =
+                FXCollections.observableArrayList(productController.getAllProducts());
 
-		// Search functionality
-		searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue == null || newValue.trim().isEmpty()) {
-				productTable.setItems(products);
-			} else {
-				ObservableList<Product> filtered = FXCollections
-						.observableArrayList(productController.searchProducts(newValue.trim()));
-				productTable.setItems(filtered);
-			}
-		});
-	}
+        productTable.setItems(products);
 
-	private void showAddToCartDialog(Product product) {
-		AddToCartView addView = new AddToCartView(currentCustomerId, product.getIdProduct(), product.getName(),
-				product.getStock());
-		addView.show();
-	}
+        searchField.textProperty().addListener((obs, o, n) -> {
+            if (n == null || n.isBlank()) {
+                productTable.setItems(products);
+            } else {
+                productTable.setItems(
+                        FXCollections.observableArrayList(
+                                productController.searchProducts(n)
+                        )
+                );
+            }
+        });
+    }
 
-	private void showCartView() {
-		CartView cartView = new CartView(currentCustomerId);
-		cartView.show();
-	}
+    private void updateBalance() {
+        double balance = customerController.getCustomerBalance(currentCustomerId);
+        balanceLabel.setText("Balance: Rp " + String.format("%,.0f", balance));
+    }
 
-	private void showEditProfile() {
-		try {
-			User user = authController.getUserById(currentCustomerId);
+    // ================== NOTIFICATION ==================
+    private void startNotificationPolling() {
 
-			if (user == null) {
-				showAlert("Error", "User not found");
-				return;
-			}
+        Thread t = new Thread(() -> {
+            while (true) {
+                Platform.runLater(this::checkNotifications);
+                try {
+                    Thread.sleep(5000); // 5 detik
+                } catch (InterruptedException ignored) {}
+            }
+        });
 
-			EditProfile editProfile = new EditProfile(user);
-			editProfile.show();
+        t.setDaemon(true);
+        t.start();
+    }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			showAlert("Error", "Cannot open Edit Profile: " + e.getMessage());
-		}
-	}
+    private void checkNotifications() {
+        var list = notificationController.getByCustomer(currentCustomerId);
 
-	private void showAlert(String title, String message) {
-		Alert alert = new Alert(Alert.AlertType.ERROR);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(message);
-		alert.showAndWait();
-	}
+        if (list.size() > notifications.size()) {
+            Notification newest = list.get(0);
+            showPopup(newest.getMessage());
+        }
 
-	public static void main(String[] args) {
-		launch(args);
-	}
+        notifications.setAll(list);
+
+        long unread = list.stream().filter(n -> !n.isRead()).count();
+        notifBtn.setText("Notifications (" + unread + ")");
+    }
+
+    private void showPopup(String message) {
+        Popup popup = new Popup();
+
+        Label label = new Label(message);
+        label.setStyle(
+                "-fx-background-color:#333;" +
+                "-fx-text-fill:white;" +
+                "-fx-padding:10;" +
+                "-fx-background-radius:8;"
+        );
+
+        popup.getContent().add(label);
+        popup.setAutoHide(true);
+        popup.show(productTable.getScene().getWindow());
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(e -> popup.hide());
+        delay.play();
+    }
+
+    private void showNotificationCenter() {
+        Stage stage = new Stage();
+        stage.setTitle("Notifications");
+
+        ListView<Notification> listView = new ListView<>(notifications);
+
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Notification n, boolean empty) {
+                super.updateItem(n, empty);
+                if (empty || n == null) {
+                    setText(null);
+                } else {
+                    setText(n.getMessage());
+                    setStyle(n.isRead()
+                            ? "-fx-text-fill:black;"
+                            : "-fx-font-weight:bold;");
+                }
+            }
+        });
+
+        listView.setOnMouseClicked(e -> {
+            Notification n = listView.getSelectionModel().getSelectedItem();
+            if (n != null && !n.isRead()) {
+                notificationController.markAsRead(n.getIdNotification());
+                checkNotifications();
+            }
+        });
+
+        VBox root = new VBox(listView);
+        root.setPadding(new Insets(10));
+
+        stage.setScene(new Scene(root, 400, 300));
+        stage.show();
+    }
+
+    // ================== NAVIGATION ==================
+    private void showAddToCartDialog(Product p) {
+        // implement milikmu
+    }
+
+    private void showCartView() {
+        // implement milikmu
+    }
+
+    private void showEditProfile() {
+        try {
+            User u = authController.getUserById(currentCustomerId);
+            new EditProfile(u).show();
+        } catch (Exception e) {
+            showAlert(e.getMessage());
+        }
+    }
+
+    private void showAlert(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg);
+        a.showAndWait();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

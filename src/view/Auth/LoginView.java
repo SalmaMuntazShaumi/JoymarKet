@@ -1,164 +1,161 @@
 package view.Auth;
 
-import controller.AuthController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import model_entity.Admin;
-import model_entity.Courier;
-import model_entity.Customer;
-import model_entity.User;
-import view.Admin.AdminDashboardView;
+import model_entity.*;
 import view.Customer.CustomerDashboard;
+import view.Admin.AdminDashboardView;
+import controller.AuthController;
+import view.Courier.CourierDashboardView;
+import view.Courier.CourierDashboardView;
+import view.Courier.CourierDashboardView;
 
 public class LoginView {
-	private AuthController authController;
-	private Stage stage;
+    private AuthController authController;
+    private Stage stage;
+    
+    public LoginView() {
+        this.authController = new AuthController();
+    }
+    
+    public void start(Stage primaryStage) {
+        this.stage = primaryStage;
+        stage.setTitle("Login - Shop System");
+        
+        // Title Label
+        Label titleLabel = new Label("Shop System Login");
+        titleLabel.setFont(Font.font("Arial", 20));
+        
+        // Email field
+        Label emailLabel = new Label("Email:");
+        TextField emailField = new TextField();
+        emailField.setPromptText("Enter your email");
+        
+        // Password field
+        Label passwordLabel = new Label("Password:");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Enter your password");
+        
+        // Role selection
+        Label roleLabel = new Label("Login as:");
+        ComboBox<String> roleCombo = new ComboBox<>();
+        roleCombo.getItems().addAll("customer", "courier", "admin");
+        roleCombo.setValue("customer");
+        
+        // Message label
+        Label messageLabel = new Label();
+        messageLabel.setStyle("-fx-text-fill: red;");
+        
+        // Buttons
+        Button loginButton = new Button("Login");
+        loginButton.setDefaultButton(true);
+        
+        Button registerButton = new Button("Register");
+        
+        // Login button action
+        loginButton.setOnAction(e -> {
+            String email = emailField.getText().trim();
+            String password = passwordField.getText().trim();
+            String selectedRole = roleCombo.getValue();
+            
+            if (email.isEmpty()) {
+                messageLabel.setText("Email is required");
+                return;
+            }
+            
+            if (password.isEmpty()) {
+                messageLabel.setText("Password is required");
+                return;
+            }
+            
+            User user = authController.login(email, password);
+            
+            if (user == null) {
+                messageLabel.setText("Invalid email or password");
+                return;
+            }
+            
+            // Check if user role matches selected role
+            if (!user.getRole().equals(selectedRole)) {
+                messageLabel.setText("Please select correct role: " + user.getRole());
+                return;
+            }
+            
+            messageLabel.setStyle("-fx-text-fill: green;");
+            messageLabel.setText("Login successful! Welcome " + user.getFullName());
+            
+            // Redirect based on role
+            if (user.isCustomer()) {
+                Customer customer = (Customer) user;
+                showProductView(customer.getIdUser(), customer.getFullName());
+            } else if (user.isCourier()) {
+                Courier courier = (Courier) user;
+                showCourierView(courier);
+            } else if (user.isAdmin()) {
+                Admin admin = (Admin) user;
+                showAdminView(admin);
+            }
+        });
+        
+        // Register button action
+        registerButton.setOnAction(e -> {
+            RoleSelection selectionView = new RoleSelection();
+            Stage selectionStage = new Stage();
+            selectionView.start(selectionStage);
+            stage.close();
+        });
+        
+        // Layout
+        VBox layout = new VBox(10);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+        layout.getChildren().addAll(
+            titleLabel,
+            emailLabel,
+            emailField,
+            passwordLabel,
+            passwordField,
+            roleLabel,
+            roleCombo,
+            loginButton,
+            new Label("Don't have an account?"),
+            registerButton,
+            messageLabel
+        );
+        
+        Scene scene = new Scene(layout, 350, 450);
+        stage.setScene(scene);
+        stage.show();
+    }
+    
+    private void showProductView(String customerId, String customerName) {
+        CustomerDashboard productView = new CustomerDashboard();
+        Stage productStage = new Stage();
+        productView.start(productStage, customerId, customerName);
+        stage.close();
+    }
+    
+    private void showCourierView(Courier courier) {
+        CourierDashboardView dashboard =
+            new CourierDashboardView(courier.getIdUser());
 
-	public LoginView() {
-		this.authController = new AuthController();
-	}
+        Stage courierStage = new Stage();
+        dashboard.show();
 
-	public void start(Stage primaryStage) {
-		this.stage = primaryStage;
-		stage.setTitle("Login - Shop System");
+        stage.close();
+    }
 
-		// Title Label
-		Label titleLabel = new Label("Shop System Login");
-		titleLabel.setFont(Font.font("Arial", 20));
-
-		// Email field
-		Label emailLabel = new Label("Email:");
-		TextField emailField = new TextField();
-		emailField.setPromptText("Enter your email");
-
-		// Password field
-		Label passwordLabel = new Label("Password:");
-		PasswordField passwordField = new PasswordField();
-		passwordField.setPromptText("Enter your password");
-
-		// Role selection
-		Label roleLabel = new Label("Login as:");
-		ComboBox<String> roleCombo = new ComboBox<>();
-		roleCombo.getItems().addAll("customer", "courier", "admin");
-		roleCombo.setValue("customer");
-
-		// Message label
-		Label messageLabel = new Label();
-		messageLabel.setStyle("-fx-text-fill: red;");
-
-		// Buttons
-		Button loginButton = new Button("Login");
-		loginButton.setDefaultButton(true);
-
-		Button registerButton = new Button("Register");
-
-		// Login button action
-		loginButton.setOnAction(e -> {
-			String email = emailField.getText().trim();
-			String password = passwordField.getText().trim();
-			String selectedRole = roleCombo.getValue();
-
-			if (email.isEmpty()) {
-				messageLabel.setText("Email is required");
-				return;
-			}
-
-			if (password.isEmpty()) {
-				messageLabel.setText("Password is required");
-				return;
-			}
-
-			User user = authController.login(email, password);
-
-			if (user == null) {
-				messageLabel.setText("Invalid email or password");
-				return;
-			}
-
-			// Check if user role matches selected role
-			if (!user.getRole().equals(selectedRole)) {
-				messageLabel.setText("Please select correct role: " + user.getRole());
-				return;
-			}
-
-			messageLabel.setStyle("-fx-text-fill: green;");
-			messageLabel.setText("Login successful! Welcome " + user.getFullName());
-
-			// Redirect based on role
-			if (user.isCustomer()) {
-				Customer customer = (Customer) user;
-				showProductView(customer.getIdUser(), customer.getFullName());
-			} else if (user.isCourier()) {
-				Courier courier = (Courier) user;
-				showCourierView(courier);
-			} else if (user.isAdmin()) {
-				Admin admin = (Admin) user;
-				showAdminView(admin);
-			}
-		});
-
-		// Register button action
-		registerButton.setOnAction(e -> {
-			RoleSelection selectionView = new RoleSelection();
-			Stage selectionStage = new Stage();
-			selectionView.start(selectionStage);
-			stage.close();
-		});
-
-		// Layout
-		VBox layout = new VBox(10);
-		layout.setAlignment(Pos.CENTER);
-		layout.setPadding(new Insets(20));
-		layout.getChildren().addAll(titleLabel, emailLabel, emailField, passwordLabel, passwordField, roleLabel,
-				roleCombo, loginButton, new Label("Don't have an account?"), registerButton, messageLabel);
-
-		Scene scene = new Scene(layout, 350, 450);
-		stage.setScene(scene);
-		stage.show();
-	}
-
-	private void showProductView(String customerId, String customerName) {
-		CustomerDashboard productView = new CustomerDashboard();
-		Stage productStage = new Stage();
-		productView.start(productStage, customerId, customerName);
-		stage.close();
-	}
-
-	private void showCourierView(Courier courier) {
-		// Courier view dengan controller
-
-		Stage courierStage = new Stage();
-		courierStage.setTitle("Courier Dashboard - " + courier.getFullName());
-
-		Label welcomeLabel = new Label("Welcome Courier: " + courier.getFullName());
-		welcomeLabel.setFont(Font.font("Arial", 18));
-
-		Label infoLabel = new Label("Vehicle: " + courier.getVehicleType() + " - " + courier.getVehiclePlate());
-
-		VBox layout = new VBox(20);
-		layout.setAlignment(Pos.CENTER);
-		layout.setPadding(new Insets(20));
-		layout.getChildren().addAll(welcomeLabel, infoLabel);
-
-		Scene scene = new Scene(layout, 400, 300);
-		courierStage.setScene(scene);
-		courierStage.show();
-		stage.close();
-	}
-
-	private void showAdminView(Admin admin) {
-		AdminDashboardView adminDashboard = new AdminDashboardView(admin);
-		Stage adminStage = new Stage();
-		adminDashboard.start(adminStage);
-		stage.close();
-	}
+    
+    private void showAdminView(Admin admin) {
+        // Redirect ke AdminDashboardView yang baru
+        AdminDashboardView adminDashboard = new AdminDashboardView(admin);
+        Stage adminStage = new Stage();
+        adminDashboard.start(adminStage);
+        stage.close();
+    }
 }

@@ -1,74 +1,50 @@
 package model_entity;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+
 public class CartItem {
-	private String idCustomer;
-	private String idProduct;
-	private int count;
-	private Product product; // Reference to product details
 
-	// Constructors
-	public CartItem() {
-	}
+    private String idCustomer;
+    private String idProduct;
+    private int count;
+    private Product product;
 
-	public CartItem(String idCustomer, String idProduct, int count) {
-		this.idCustomer = idCustomer;
-		this.idProduct = idProduct;
-		this.count = count;
-	}
+    // === UI ONLY (checkbox) ===
+    private BooleanProperty selected = new SimpleBooleanProperty(false);
 
-	public CartItem(String idCustomer, String idProduct, int count, Product product) {
-		this.idCustomer = idCustomer;
-		this.idProduct = idProduct;
-		this.count = count;
-		this.product = product;
-	}
+    public CartItem() {}
 
-	// Getters and Setters
-	public String getIdCustomer() {
-		return idCustomer;
-	}
+    public CartItem(String idCustomer, String idProduct, int count, Product product) {
+        this.idCustomer = idCustomer;
+        this.idProduct = idProduct;
+        this.count = count;
+        this.product = product;
+    }
 
-	public void setIdCustomer(String idCustomer) {
-		this.idCustomer = idCustomer;
-	}
+    // ===== GETTER SETTER =====
+    public String getIdCustomer() { return idCustomer; }
+    public String getIdProduct() { return idProduct; }
+    public int getCount() { return count; }
+    public Product getProduct() { return product; }
 
-	public String getIdProduct() {
-		return idProduct;
-	}
+    public void setCount(int count) { this.count = count; }
 
-	public void setIdProduct(String idProduct) {
-		this.idProduct = idProduct;
-	}
+    // ===== CHECKBOX SUPPORT =====
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
 
-	public int getCount() {
-		return count;
-	}
+    public boolean isSelected() {
+        return selected.get();
+    }
 
-	public void setCount(int count) {
-		this.count = count;
-	}
+    public void setSelected(boolean v) {
+        selected.set(v);
+    }
 
-	public Product getProduct() {
-		return product;
-	}
-
-	public void setProduct(Product product) {
-		this.product = product;
-	}
-
-	// Simple calculated getter (masih boleh karena hanya transformasi data)
-	public double getTotalPrice() {
-		if (product != null) {
-			return product.getPrice() * count;
-		}
-		return 0;
-	}
-
-	@Override
-	public String toString() {
-		if (product != null) {
-			return String.format("%s x %d = Rp%,.0f", product.getName(), count, getTotalPrice());
-		}
-		return String.format("Product: %s x %d", idProduct, count);
-	}
+    // ===== CALCULATED =====
+    public double getTotalPrice() {
+        return product != null ? product.getPrice() * count : 0;
+    }
 }

@@ -4,6 +4,6 @@ module JoymarKet {
 	requires javafx.controls;
 	requires java.sql;
 	requires javafx.base;
-
+    
 	opens main;
 }
