@@ -6,14 +6,15 @@ public class OrderHeader {
     private String idOrder;
     private String idCustomer;
     private String idPromo;
-    private String status; // PENDING, PAID
+    private String status;
     private double totalAmount;
     private LocalDateTime orderedAt;
-
+    private String courierName; // Optional: for display
+    
     public OrderHeader() {}
-
-    public OrderHeader(String idOrder, String idCustomer, String idPromo,
-                       String status, double totalAmount, LocalDateTime orderedAt) {
+    
+    public OrderHeader(String idOrder, String idCustomer, String idPromo, 
+                      String status, double totalAmount, LocalDateTime orderedAt) {
         this.idOrder = idOrder;
         this.idCustomer = idCustomer;
         this.idPromo = idPromo;
@@ -21,23 +22,26 @@ public class OrderHeader {
         this.totalAmount = totalAmount;
         this.orderedAt = orderedAt;
     }
-
-    // Getters & Setters
+    
+    // Getters and Setters
     public String getIdOrder() { return idOrder; }
     public void setIdOrder(String idOrder) { this.idOrder = idOrder; }
-
+    
     public String getIdCustomer() { return idCustomer; }
     public void setIdCustomer(String idCustomer) { this.idCustomer = idCustomer; }
-
+    
     public String getIdPromo() { return idPromo; }
     public void setIdPromo(String idPromo) { this.idPromo = idPromo; }
-
+    
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
+    
     public double getTotalAmount() { return totalAmount; }
     public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
-
+    
     public LocalDateTime getOrderedAt() { return orderedAt; }
     public void setOrderedAt(LocalDateTime orderedAt) { this.orderedAt = orderedAt; }
+    
+    public String getCourierName() { return courierName; }
+    public void setCourierName(String courierName) { this.courierName = courierName; }
 }
