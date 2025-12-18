@@ -141,11 +141,9 @@ public class LoginView {
     }
     
     private void showCourierView(Courier courier) {
-        CourierDashboardView dashboard =
-            new CourierDashboardView(courier.getIdUser());
-
+        CourierDashboardView courierDashboard = new CourierDashboardView(courier.getIdUser());
         Stage courierStage = new Stage();
-        dashboard.show();
+        courierDashboard.show();
 
         stage.close();
     }

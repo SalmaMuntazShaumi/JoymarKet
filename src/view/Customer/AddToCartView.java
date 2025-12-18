@@ -120,6 +120,7 @@ public class AddToCartView {
 			return;
 		}
 
+		// Validationo
 		try {
 			int quantity = Integer.parseInt(countText);
 

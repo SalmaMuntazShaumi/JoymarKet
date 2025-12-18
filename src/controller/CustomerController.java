@@ -47,19 +47,17 @@ public class CustomerController {
 			return errorMessage.toString().trim();
 		}
 
-		// Check if email already exists
 		if (UserModel.isEmailExists(email.trim())) {
 			return "Email already registered";
 		}
 
-		// Create customer entity TANPA id (akan digenerate otomatis)
-		Customer customer = new Customer(null, // ID akan digenerate otomatis
+		Customer customer = new Customer(null,
 				fullName.trim(), email.trim(), password.trim(), phone.trim(), address.trim(), gender);
 
 		Customer createdCustomer = CustomerModel.createCustomer(customer);
 
 		if (createdCustomer != null) {
-			return "SUCCESS#" + createdCustomer.getIdUser(); // Return ID yang digenerate
+			return "SUCCESS#" + createdCustomer.getIdUser();
 		} else {
 			return "Registration failed. Please try again.";
 		}
@@ -106,21 +104,6 @@ public class CustomerController {
 	// Get all customers
 	public List<Customer> getAllCustomers() {
 		return CustomerModel.getAllCustomers();
-	}
-
-	// Check if customer can afford
-	public boolean canCustomerAfford(String customerId, double amount) {
-		double balance = getCustomerBalance(customerId);
-		return balance >= amount && amount > 0;
-	}
-
-	// Deduct balance
-	public boolean deductBalance(String customerId, double amount) {
-		if (amount <= 0) {
-			return false;
-		}
-
-		return CustomerModel.deductBalance(customerId, amount);
 	}
 
 	// Validation methods

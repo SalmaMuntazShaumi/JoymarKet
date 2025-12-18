@@ -41,13 +41,11 @@ public class ProductController {
 			return "Invalid product ID";
 		}
 
-		// Business logic: cek apakah product ada
 		Product product = ProductModel.getProductById(idProduct);
 		if (product == null) {
 			return "Product not found";
 		}
 
-		// Delegasi ke Model
 		if (ProductModel.updateProductStock(idProduct, newStock)) {
 			return "";
 		} else {
@@ -86,13 +84,11 @@ public class ProductController {
 			return "Stock cannot be negative";
 		}
 
-		// Business logic: cek apakah product ID sudah ada
 		Product existingProduct = ProductModel.getProductById(product.getIdProduct());
 		if (existingProduct != null) {
 			return "Product ID already exists";
 		}
 
-		// Delegasi ke Model
 		if (ProductModel.addProduct(product)) {
 			return "";
 		} else {
@@ -122,14 +118,12 @@ public class ProductController {
 			return "Stock cannot be negative";
 		}
 
-		// Business logic: cek apakah product ada
 		Product existingProduct = ProductModel.getProductById(product.getIdProduct());
 		if (existingProduct == null) {
 			return "Product not found";
 		}
 
-		// Delegasi ke Model - PERBAIKAN DI SINI
-		if (ProductModel.updateProductDetails(product)) { // Ganti updateProduct dengan updateProductDetails
+		if (ProductModel.updateProductDetails(product)) {
 			return "";
 		} else {
 			return "Failed to update product";
@@ -142,13 +136,11 @@ public class ProductController {
 			return "Invalid product ID";
 		}
 
-		// Business logic: cek apakah product ada
 		Product existingProduct = ProductModel.getProductById(idProduct);
 		if (existingProduct == null) {
 			return "Product not found";
 		}
 
-		// Delegasi ke Model
 		if (ProductModel.deleteProduct(idProduct)) {
 			return "";
 		} else {
@@ -178,7 +170,7 @@ public class ProductController {
 		return ProductModel.getProductsByCategory(category.trim());
 	}
 
-	// Business logic untuk restock
+	// Restock
 	public String restockProduct(String idProduct, int additionalStock) {
 		if (additionalStock <= 0) {
 			return "Additional stock must be greater than 0";
@@ -189,7 +181,6 @@ public class ProductController {
 			return "Product not found";
 		}
 
-		// Gunakan method restockProduct dari Model
 		if (ProductModel.restockProduct(idProduct, additionalStock)) {
 			return "";
 		} else {

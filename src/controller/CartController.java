@@ -26,7 +26,6 @@ public class CartController {
 			return "Quantity must be greater than 0";
 		}
 
-		// Business logic: cek stok produk
 		Product product = ProductModel.getProductById(idProduct);
 		if (product == null) {
 			return "Product not found";
@@ -36,7 +35,6 @@ public class CartController {
 			return "Not enough stock available. Available: " + product.getStock();
 		}
 
-		// Business logic: cek item yang sudah ada di cart
 		CartItem existingItem = CartModel.getCartItem(idCustomer, idProduct);
 		if (existingItem != null) {
 			int newQuantity = existingItem.getCount() + quantity;
@@ -46,14 +44,14 @@ public class CartController {
 			}
 		}
 
-		// Delegasi ke Model untuk operasi database
 		if (!CartModel.addToCart(idCustomer, idProduct, quantity)) {
 			return "Failed to add item to cart";
 		}
 
-		return ""; // Success
+		return "";
 	}
 
+	// Update Cart
 	public String updateCartItem(String idCustomer, String idProduct, int newQuantity) {
 		if (newQuantity <= 0) {
 			return "Quantity must be greater than 0";
@@ -80,6 +78,7 @@ public class CartController {
 		return "";
 	}
 
+	//Remove Cart
 	public String removeFromCart(String idCustomer, String idProduct) {
 		CartItem existingItem = CartModel.getCartItem(idCustomer, idProduct);
 		if (existingItem == null) {
@@ -112,7 +111,6 @@ public class CartController {
 		return CartModel.getCartItemCount(idCustomer);
 	}
 
-	// Business logic khusus
 	public boolean checkoutCart(String idCustomer) {
 		List<CartItem> cartItems = CartModel.getCartItemsByCustomer(idCustomer);
 

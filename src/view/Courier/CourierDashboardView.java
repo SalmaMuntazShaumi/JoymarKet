@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model_entity.Delivery;
+import view.Auth.LoginView;
 
 public class CourierDashboardView {
 
@@ -27,8 +28,17 @@ public class CourierDashboardView {
         setupFilter();
         setupTable();
         loadData();
+        
+        Button logoutBtn = new Button("Logout");
+        
+        logoutBtn.setOnAction(e -> {
+            LoginView loginView = new LoginView();
+            Stage loginStage = new Stage();
+            loginView.start(loginStage);
+            stage.close();
+        });
 
-        VBox root = new VBox(12, filterBox, table);
+        VBox root = new VBox(12, filterBox, table, logoutBtn);
         root.setPadding(new Insets(15));
 
         stage.setScene(new Scene(root, 900, 520));

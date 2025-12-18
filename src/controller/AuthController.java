@@ -20,7 +20,6 @@ public class AuthController {
 			return null;
 		}
 
-		// Return appropriate subclass with full details
 		switch (user.getRole()) {
 		case "customer":
 			return CustomerModel.getCustomerById(user.getIdUser());
@@ -35,7 +34,6 @@ public class AuthController {
 
 	// Edit profile
 	public String editProfile(User user) {
-		// Validasi input
 		StringBuilder errorMessage = new StringBuilder();
 
 		if (user.getFullName() == null || user.getFullName().trim().isEmpty()) {
@@ -70,36 +68,6 @@ public class AuthController {
 		}
 	}
 
-	// Change password
-	public String changePassword(String userId, String oldPassword, String newPassword, String confirmPassword) {
-
-		if (oldPassword == null || oldPassword.trim().isEmpty()) {
-			return "Current password is required";
-		}
-
-		if (!isValidPassword(newPassword)) {
-			return "New password must be at least 6 characters";
-		}
-
-		if (!newPassword.equals(confirmPassword)) {
-			return "New passwords do not match";
-		}
-
-		// Verify old password
-		User user = getUserById(userId); // Gunakan method ini
-		if (user == null || !user.getPassword().equals(oldPassword.trim())) {
-			return "Current password is incorrect";
-		}
-
-		// Change password
-		if (UserModel.changePassword(userId, newPassword.trim())) {
-			return "SUCCESS";
-		} else {
-			return "Password change failed";
-		}
-	}
-
-	// **TAMBAHKAN METHOD INI**
 	public User getUserById(String userId) {
 		if (userId == null || userId.trim().isEmpty()) {
 			return null;
@@ -108,7 +76,6 @@ public class AuthController {
 		User user = UserModel.getUserById(userId.trim());
 
 		if (user != null) {
-			// Return appropriate subclass with full details
 			switch (user.getRole()) {
 			case "customer":
 				return CustomerModel.getCustomerById(user.getIdUser());

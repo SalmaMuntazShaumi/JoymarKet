@@ -57,15 +57,14 @@ public class AdminController {
 			return "Email already registered";
 		}
 
-		// Create admin entity TANPA id (akan digenerate otomatis)
-		Admin admin = new Admin(null, // ID akan digenerate otomatis
+		Admin admin = new Admin(null,
 				fullName.trim(), email.trim(), password.trim(), phone.trim(), address.trim(), gender.trim(),
 				emergencyContact.trim());
 
 		Admin createdAdmin = AdminModel.createAdmin(admin);
 
 		if (createdAdmin != null) {
-			return "SUCCESS#" + createdAdmin.getIdUser(); // Return ID yang digenerate
+			return "SUCCESS#" + createdAdmin.getIdUser();
 		} else {
 			return "Registration failed. Please try again.";
 		}
