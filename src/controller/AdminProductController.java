@@ -9,7 +9,6 @@ public class AdminProductController {
 
 	// Add new product
 	public String addNewProduct(String name, String priceStr, String stockStr, String category) {
-		// Validasi input
 		if (name == null || name.trim().isEmpty()) {
 			return "Product name is required";
 		}
@@ -40,13 +39,10 @@ public class AdminProductController {
 			return "Category is required";
 		}
 
-		// Generate product ID otomatis
 		String generatedId = ProductModel.generateProductId();
 
-		// Create product entity
 		Product product = new Product(generatedId, name.trim(), price, stock, category.trim());
 
-		// Save to database
 		if (ProductModel.addProduct(product)) {
 			return "SUCCESS#" + generatedId;
 		} else {
@@ -56,7 +52,6 @@ public class AdminProductController {
 
 	// Edit product stock
 	public String editProductStock(String idProduct, String newStockStr) {
-		// Validasi input
 		if (idProduct == null || idProduct.trim().isEmpty()) {
 			return "Product ID is required";
 		}
@@ -88,7 +83,6 @@ public class AdminProductController {
 
 	// Restock product (tambah stock)
 	public String restockProduct(String idProduct, String additionalStockStr) {
-		// Validasi input
 		if (idProduct == null || idProduct.trim().isEmpty()) {
 			return "Product ID is required";
 		}
@@ -104,7 +98,6 @@ public class AdminProductController {
 			return "Additional stock must be greater than 0";
 		}
 
-		// Cek apakah product ada
 		Product product = ProductModel.getProductById(idProduct);
 		if (product == null) {
 			return "Product not found";
@@ -120,7 +113,6 @@ public class AdminProductController {
 
 	// Edit product details (all fields)
 	public String editProductDetails(String idProduct, String name, String priceStr, String stockStr, String category) {
-		// Validasi input
 		if (idProduct == null || idProduct.trim().isEmpty()) {
 			return "Product ID is required";
 		}
@@ -155,7 +147,6 @@ public class AdminProductController {
 			return "Category is required";
 		}
 
-		// Cek apakah product ada
 		Product existingProduct = ProductModel.getProductById(idProduct);
 		if (existingProduct == null) {
 			return "Product not found";
@@ -174,12 +165,10 @@ public class AdminProductController {
 
 	// Delete product
 	public String deleteProduct(String idProduct) {
-		// Validasi input
 		if (idProduct == null || idProduct.trim().isEmpty()) {
 			return "Product ID is required";
 		}
 
-		// Cek apakah product ada
 		Product product = ProductModel.getProductById(idProduct);
 		if (product == null) {
 			return "Product not found";

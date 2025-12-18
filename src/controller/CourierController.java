@@ -60,15 +60,14 @@ public class CourierController {
 			return "Email already registered";
 		}
 
-		// Create courier entity TANPA id (akan digenerate otomatis)
-		Courier courier = new Courier(null, // ID akan digenerate otomatis
+		Courier courier = new Courier(null,
 				fullName.trim(), email.trim(), password.trim(), phone.trim(), address.trim(), gender.trim(),
 				vehicleType.trim(), vehiclePlate.trim());
 
 		Courier createdCourier = CourierModel.createCourier(courier);
 
 		if (createdCourier != null) {
-			return "SUCCESS#" + createdCourier.getIdUser(); // Return ID yang digenerate
+			return "SUCCESS#" + createdCourier.getIdUser();
 		} else {
 			return "Registration failed. Please try again.";
 		}

@@ -1,6 +1,7 @@
 package view.Customer;
 
 import controller.CartController;
+import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -9,8 +10,14 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import model.ProductModel;
 import model_entity.CartItem;
+import model_entity.Product;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +31,7 @@ public class CartView {
     private Label totalLabel;
     private CheckBox selectAllCheckBox;
 
-    // 🔥 CALLBACK
+    // CALLBACK
     private Runnable onCheckoutSuccess;
 
     // ===== CONSTRUCTOR =====
@@ -132,6 +139,7 @@ public class CartView {
         cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
+    // Action Button Column
     private TableColumn<CartItem, Void> createActionColumn() {
 
         TableColumn<CartItem, Void> col = new TableColumn<>("Action");
@@ -166,29 +174,79 @@ public class CartView {
         col.setPrefWidth(160);
         return col;
     }
-
+    
+    // Edit qty
     private void editQty(CartItem item) {
-        TextInputDialog dialog =
-            new TextInputDialog(String.valueOf(item.getCount()));
-
+        // Get product stock
+        int currentStock = getProductStock(item.getIdProduct());
+        int currentQty = item.getCount();
+        
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(currentQty));
         dialog.setTitle("Edit Quantity");
         dialog.setHeaderText(item.getProduct().getName());
-        dialog.setContentText("Quantity:");
-
-        dialog.showAndWait().ifPresent(val -> {
+        dialog.setContentText("Quantity (Max: " + currentStock + "):");
+        
+        // Show dialog and handle result
+        String result = dialog.showAndWait().orElse(null);
+        
+        if (result != null) {
             try {
-                int qty = Integer.parseInt(val);
-                if (qty <= 0) return;
-
-                cartController.updateCartItem(
-                    customerId,
-                    item.getIdProduct(),
-                    qty
-                );
+                int qty = Integer.parseInt(result);
+                
+                // Validation
+                if (qty <= 0) {
+                    showError("Quantity must be greater than 0");
+                    return;
+                }
+                
+                if (qty > currentStock) {
+                    showError("Not enough stock! Available: " + currentStock);
+                    return;
+                }
+                
+                // Update cart
+                cartController.updateCartItem(customerId, item.getIdProduct(), qty);
                 loadData();
+                
+            } catch (NumberFormatException e) {
+                showError("Please enter a valid number");
+            }
+        }
+    }
 
-            } catch (NumberFormatException ignored) {}
-        });
+    private int getProductStock(String productId) {
+        // Method 1: If CartItem has product with stock
+        Product product = ProductModel.getProductById(productId);
+        if (product != null) {
+            return product.getStock();
+        }
+        
+        // Method 2: Direct database query
+        String sql = "SELECT stock FROM Product WHERE idProduct = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, productId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("stock");
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return 0;
+    }
+
+    // Error Validation
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void loadData() {
@@ -205,6 +263,7 @@ public class CartView {
         updateTotal();
     }
 
+    // Update total harga
     private void updateTotal() {
         double total = cartTable.getItems().stream()
             .filter(CartItem::isSelected)
@@ -217,7 +276,6 @@ public class CartView {
     }
 
     private void openCheckout() {
-
         List<CartItem> selected =
             cartTable.getItems().stream()
                 .filter(CartItem::isSelected)
@@ -228,13 +286,12 @@ public class CartView {
             return;
         }
 
-        // ⬇️ Checkout dialog
+        // Checkout dialog
         CheckoutView checkout =
             new CheckoutView(customerId, selected);
 
         checkout.showAndWait();
 
-        // 🔥 CALLBACK SETELAH CHECKOUT
         if (onCheckoutSuccess != null) {
             onCheckoutSuccess.run();
         }

@@ -1,4 +1,4 @@
-package view;
+package view.Customer;
 
 import controller.AuthController;
 import javafx.geometry.Insets;
@@ -45,17 +45,6 @@ public class EditProfile {
 		Label infoLabel = new Label();
 
 		Button saveBtn = new Button("Save Changes");
-		Button logoutBtn = new Button("Logout");
-
-		// Password change section
-		Label passwordLabel = new Label("Change Password:");
-		javafx.scene.control.PasswordField oldPasswordField = new javafx.scene.control.PasswordField();
-		oldPasswordField.setPromptText("Current Password");
-		javafx.scene.control.PasswordField newPasswordField = new javafx.scene.control.PasswordField();
-		newPasswordField.setPromptText("New Password");
-		javafx.scene.control.PasswordField confirmPasswordField = new javafx.scene.control.PasswordField();
-		confirmPasswordField.setPromptText("Confirm New Password");
-		Button changePasswordBtn = new Button("Change Password");
 
 		saveBtn.setOnAction(e -> {
 			// Update user information
@@ -76,38 +65,10 @@ public class EditProfile {
 			}
 		});
 
-		changePasswordBtn.setOnAction(e -> {
-			String oldPassword = oldPasswordField.getText();
-			String newPassword = newPasswordField.getText();
-			String confirmPassword = confirmPasswordField.getText();
-
-			String result = authController.changePassword(user.getIdUser(), oldPassword, newPassword, confirmPassword);
-
-			if ("SUCCESS".equals(result)) {
-				infoLabel.setStyle("-fx-text-fill: green;");
-				infoLabel.setText("Password changed successfully!");
-				oldPasswordField.clear();
-				newPasswordField.clear();
-				confirmPasswordField.clear();
-			} else {
-				infoLabel.setStyle("-fx-text-fill: red;");
-				infoLabel.setText(result);
-			}
-		});
-
-		logoutBtn.setOnAction(e -> {
-			// Show login view
-			LoginView loginView = new LoginView();
-			Stage loginStage = new Stage();
-			loginView.start(loginStage);
-			stage.close();
-		});
 
 		VBox root = new VBox(10, new Label("Edit Profile"), new Label("Name:"), nameField, new Label("Email:"),
 				emailField, new Label("Phone:"), phoneField, new Label("Address:"), addressField, new Label("Gender:"),
-				genderCombo, saveBtn, new javafx.scene.control.Separator(), passwordLabel, oldPasswordField,
-				newPasswordField, confirmPasswordField, changePasswordBtn, new javafx.scene.control.Separator(),
-				logoutBtn, infoLabel);
+				genderCombo, saveBtn, infoLabel);
 		root.setPadding(new Insets(20));
 
 		stage.setScene(new Scene(root, 400, 650));

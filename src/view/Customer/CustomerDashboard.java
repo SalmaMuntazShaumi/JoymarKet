@@ -16,6 +16,7 @@ import javafx.animation.PauseTransition;
 
 import model_entity.Product;
 import model_entity.User;
+import view.Auth.LoginView;
 import model_entity.Notification;
 
 import controller.ProductController;
@@ -23,8 +24,6 @@ import controller.CustomerController;
 import controller.AuthController;
 import controller.CartController;
 import controller.NotificationController;
-
-import view.EditProfile;
 
 public class CustomerDashboard extends Application {
 
@@ -101,12 +100,21 @@ public class CustomerDashboard extends Application {
         });
         
         Button orderHistoryBtn = new Button("Order History");
-        orderHistoryBtn.setStyle("-fx-background-color: #9c27b0; -fx-text-fill: white;");
+        orderHistoryBtn.setStyle("-fx-background-color: #ffcf4a; -fx-text-fill: white;");
         orderHistoryBtn.setOnAction(e -> showOrderHistory());
 
         Button editProfileBtn = new Button("Edit Profile");
-        editProfileBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
+        editProfileBtn.setStyle("-fx-background-color: #ff8426; -fx-text-fill: white;");
         editProfileBtn.setOnAction(e -> showEditProfile());
+        
+        Button logoutBtn = new Button("Logout");
+        logoutBtn.setStyle("-fx-background-color: #ff0505; -fx-text-fill: white;");
+		logoutBtn.setOnAction(e -> {
+            LoginView loginView = new LoginView();
+            Stage loginStage = new Stage();
+            loginView.start(loginStage);
+            stage.close();
+        });
 
         HBox topBar = new HBox(10,
                 balanceLabel,
@@ -116,7 +124,8 @@ public class CustomerDashboard extends Application {
                 cartBtn,
                 topUpBtn,
                 orderHistoryBtn, 
-                editProfileBtn
+                editProfileBtn,
+                logoutBtn
         );
         topBar.setPadding(new Insets(10));
         topBar.setAlignment(Pos.CENTER_LEFT);
@@ -227,33 +236,12 @@ public class CustomerDashboard extends Application {
 
         if (list.size() > notifications.size()) {
             Notification newest = list.get(0);
-            showPopup(newest.getMessage());
         }
 
         notifications.setAll(list);
 
         long unread = list.stream().filter(n -> !n.isRead()).count();
         notifBtn.setText("Notifications (" + unread + ")");
-    }
-
-    private void showPopup(String message) {
-        Popup popup = new Popup();
-
-        Label label = new Label(message);
-        label.setStyle(
-                "-fx-background-color:#333;" +
-                "-fx-text-fill:white;" +
-                "-fx-padding:10;" +
-                "-fx-background-radius:8;"
-        );
-
-        popup.getContent().add(label);
-        popup.setAutoHide(true);
-        popup.show(productTable.getScene().getWindow());
-
-        PauseTransition delay = new PauseTransition(Duration.seconds(3));
-        delay.setOnFinished(e -> popup.hide());
-        delay.play();
     }
 
     private void showNotificationCenter() {
@@ -296,7 +284,7 @@ public class CustomerDashboard extends Application {
     private void showAddToCartDialog(Product p) {
     	AddToCartView dialog = new AddToCartView(
     	        currentCustomerId,
-    	        p.getIdProduct(),  // Make sure Product class has getIdProduct() method
+    	        p.getIdProduct(),
     	        p.getName(),
     	        p.getStock()
     	    );
@@ -332,9 +320,5 @@ public class CustomerDashboard extends Application {
     private void showAlert(String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR, msg);
         a.showAndWait();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

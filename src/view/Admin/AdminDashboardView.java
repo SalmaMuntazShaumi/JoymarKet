@@ -11,6 +11,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model_entity.Admin;
 import view.Auth.LoginView;
+import view.Courier.CourierListView;
 
 public class AdminDashboardView {
     private Admin admin;
@@ -29,10 +30,12 @@ public class AdminDashboardView {
 
         Button manageProductsBtn = new Button("Manage Products");
         Button manageOrdersBtn = new Button("Manage Orders");
+        Button courierListBtn = new Button("Courier List");
         Button logoutBtn = new Button("Logout");
 
         manageProductsBtn.setMinWidth(220);
         manageOrdersBtn.setMinWidth(220);
+        courierListBtn.setMinWidth(220);
         logoutBtn.setMinWidth(220);
 
         manageProductsBtn.setOnAction(e -> {
@@ -43,6 +46,11 @@ public class AdminDashboardView {
         manageOrdersBtn.setOnAction(e -> {
             AdminOrdersDashboardView ordersView = new AdminOrdersDashboardView();
             ordersView.show();
+        });
+        
+        courierListBtn.setOnAction(e -> {
+        	CourierListView courierListView = new CourierListView();
+        	courierListView.show();
         });
 
         logoutBtn.setOnAction(e -> {
@@ -57,6 +65,7 @@ public class AdminDashboardView {
                 infoLabel,
                 manageProductsBtn,
                 manageOrdersBtn,
+                courierListBtn,
                 logoutBtn
         );
 
