@@ -21,6 +21,7 @@ import model_entity.Notification;
 import controller.ProductController;
 import controller.CustomerController;
 import controller.AuthController;
+import controller.CartController;
 import controller.NotificationController;
 
 import view.EditProfile;
@@ -32,6 +33,7 @@ public class CustomerDashboard extends Application {
     private CustomerController customerController;
     private AuthController authController;
     private NotificationController notificationController;
+    private CartController cartController;
 
     // ================== USER ==================
     private String currentCustomerId;
@@ -55,6 +57,7 @@ public class CustomerDashboard extends Application {
         customerController = new CustomerController();
         authController = new AuthController();
         notificationController = new NotificationController();
+        cartController = CartController.getInstance();
 
         initUI(stage);
         loadProducts();
@@ -83,16 +86,26 @@ public class CustomerDashboard extends Application {
         notifBtn.setStyle("-fx-background-color:#6a1b9a; -fx-text-fill:white;");
         notifBtn.setOnAction(e -> showNotificationCenter());
 
-        Button cartBtn = new Button("Cart");
+        Button cartBtn = new Button("View Cart");
+        cartBtn.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white;");
         cartBtn.setOnAction(e -> showCartView());
+        
+        Button topUpBtn = new Button("Top Up");
+        topUpBtn.setStyle("-fx-background-color: #4caf50; -fx-text-fill: white;");
+        topUpBtn.setOnAction(e -> showTopUp());
 
         Button refreshBtn = new Button("Refresh");
         refreshBtn.setOnAction(e -> {
             loadProducts();
             updateBalance();
         });
+        
+        Button orderHistoryBtn = new Button("Order History");
+        orderHistoryBtn.setStyle("-fx-background-color: #9c27b0; -fx-text-fill: white;");
+        orderHistoryBtn.setOnAction(e -> showOrderHistory());
 
         Button editProfileBtn = new Button("Edit Profile");
+        editProfileBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
         editProfileBtn.setOnAction(e -> showEditProfile());
 
         HBox topBar = new HBox(10,
@@ -101,6 +114,8 @@ public class CustomerDashboard extends Application {
                 searchField,
                 refreshBtn,
                 cartBtn,
+                topUpBtn,
+                orderHistoryBtn, 
                 editProfileBtn
         );
         topBar.setPadding(new Insets(10));
@@ -177,8 +192,18 @@ public class CustomerDashboard extends Application {
     }
 
     private void updateBalance() {
-        double balance = customerController.getCustomerBalance(currentCustomerId);
-        balanceLabel.setText("Balance: Rp " + String.format("%,.0f", balance));
+        try {
+            double balance = customerController.getCustomerBalance(currentCustomerId);
+            balanceLabel.setText(String.format("Balance: Rp%,.0f", balance));
+        } catch (Exception e) {
+            balanceLabel.setText("Balance: -");
+        }
+    }
+
+    private void showTopUp() {
+        TopUpBalance topUpView = new TopUpBalance(currentCustomerId);
+        topUpView.show();
+        updateBalance();
     }
 
     // ================== NOTIFICATION ==================
@@ -269,11 +294,30 @@ public class CustomerDashboard extends Application {
 
     // ================== NAVIGATION ==================
     private void showAddToCartDialog(Product p) {
-        // implement milikmu
+    	AddToCartView dialog = new AddToCartView(
+    	        currentCustomerId,
+    	        p.getIdProduct(),  // Make sure Product class has getIdProduct() method
+    	        p.getName(),
+    	        p.getStock()
+    	    );
+    	    dialog.showAndWait();
+    	    
+    	    // Refresh product list (stock might have changed)
+    	    loadProducts();
     }
 
     private void showCartView() {
-        // implement milikmu
+    	CartView cartView = new CartView(currentCustomerId, () -> {
+            // This runs after successful checkout
+            updateBalance();  // Refresh balance
+            loadProducts();   // Refresh products (stock updated)
+        });
+        cartView.show();
+    }
+    
+    private void showOrderHistory() {
+        OrderHistoryView orderHistory = new OrderHistoryView(currentCustomerId);
+        orderHistory.show();
     }
 
     private void showEditProfile() {
